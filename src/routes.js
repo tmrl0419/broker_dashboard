@@ -25,6 +25,7 @@ import Notifications from "@material-ui/icons/Notifications";
 import Unarchive from "@material-ui/icons/Unarchive";
 import Language from "@material-ui/icons/Language";
 // core components/views for Admin layout
+import LoginPage from "views/Login/Login.jsx"
 import DashboardPage from "views/Dashboard/Dashboard.jsx";
 import UserProfile from "views/UserProfile/UserProfile.jsx";
 import TableList from "views/TableList/TableList.jsx";
@@ -37,6 +38,14 @@ import UpgradeToPro from "views/UpgradeToPro/UpgradeToPro.jsx";
 import RTLPage from "views/RTLPage/RTLPage.jsx";
 
 const dashboardRoutes = [
+  {
+    path: "/login",
+    name: "Login",
+    rtlName: "لوحة القيادة",
+    icon: Dashboard,
+    component: LoginPage,
+    layout: "/admin"
+  },
   {
     path: "/dashboard",
     name: "Dashboard",
