@@ -12,14 +12,14 @@ import { array } from "prop-types";
 
 function InstanceList(props){
   const { instance_list } = props;
-   const list = instance_list.map(
-     (info) => (<Instance data = {info}/>) 
-   );
-   return(
-     <div>
-       {list}
-     </div>
-     
+  const list = instance_list.map(
+    
+    (info) => (console.log(info),<Instance data = {info}/>)
+  );
+  return(
+    <div>
+      {list}
+    </div>   
   );
 }
 

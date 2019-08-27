@@ -1,10 +1,15 @@
-from flask import Flask, request
+from flask import Flask, request, make_response
+from flask_cors import CORS
 import json
 import src.api as oa
 import src.model as om
 import tensorflow as tf
 
 app = Flask(__name__)
+cors = CORS(app, resources={
+  r"/login/*": {"origin": "*"},
+  r"/instanceInfo/*": {"origin": "*"},
+})
 model = om.load_model('model/model')
 graph = tf.get_default_graph()
 print(model)
@@ -55,33 +60,33 @@ def project():
     print(resJson)
     return resJson
 
-@app.route("/instanceInfo", methods=['get'])
+@app.route("/instanceInfo", methods=['GET'])
 def instnaceInfo():
     """Instance Inforamtion"""
     print("/instanceInfo  <- ")
-    # data = request.get_json()
-    token = request.headers.get('token')
+    token = request.args.get('token')
     server_names, server_uuid = oa.get_server_list(token)
-
-    names = []
-    measures = []
+    data = []
     for i in range(len(server_uuid)):
         try:
             res = oa.get_resource_list(token, server_uuid[i])
-            measures.append(oa.get_mesuare_list(token, res))
-            names.append(server_names[i])
-        except:
-            pass
-    
+            temp = list(oa.get_mesuare_list(token, res))
+            element = {}
+            element['name'] = server_names[i]
+            element['cpu'] = round(temp[0]*100,0)
+            element['memory'] = round(temp[1]*100,0)
+            element['disk'] = round(temp[2]*100, 0)
+            data.append(temp)
+        except Exception as e:
+            print(e)
     jsonResult = {
-        'instance': names,
-        'data': measures
+        'data': element
     }
-
+    res = make_response(jsonResult)
     resJson = json.dumps(jsonResult)
     print("/instanceInfo  -> ")
     print(resJson)
-    return resJson
+    return res
 
 @app.route("/predict", methods=['get'])
 def predict():
@@ -110,7 +115,8 @@ def predict():
         resJson = json.dumps(str(jsonResult))
         print("/predict  -> ")
         print(resJson)
-        return resJson
+        res = {'result': True}
+        return res
 
 if __name__ == '__main__':
     app.run(host='localhost', port = 5000, debug = True)

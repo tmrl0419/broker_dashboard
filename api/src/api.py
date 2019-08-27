@@ -23,8 +23,12 @@ def get_server_list(token):
     headers = {'Content-Type': 'application/json', 'X-Auth-Token': token}
     res = requests.get(url, headers=headers)
     body = res.json()
-    server_uuid = [ x['id'] for x in body['servers']]
-    server_names = [ x['name'] for x in body['servers']]
+    try:
+        server_uuid = [ x['id'] for x in body['servers']]
+        server_names = [ x['name'] for x in body['servers']]
+    except:
+        pass
+    
     return server_names, server_uuid
 
 def get_token(id,passwd):
@@ -86,7 +90,6 @@ def get_resource_list(token, instance_uuid):
     headers = {'Content-Type': 'application/json, */*', 'X-Auth-Token':token}
     res = requests.get( url, headers = headers )
     body = res.json()
-    print(body)
     return body
 
 def get_mesuare_list(token, body):
@@ -130,8 +133,7 @@ def get_flavor_info(token, flavorID):
     headers = {'Content-Type': 'application/json', 'X-Auth-Token': token}
     url = url_base + 'compute/v2.1/os-simple-tenant-usage/%s' % flavorID
     res = requests.get(url=url, headers=headers)
-    print(res.__dict__)
-    #return res.json()
+    return res.json()
 
 if __name__ == '__main__':
     token = get_token('admin','devstack')
