@@ -55,11 +55,20 @@ def project():
     uuid = data['uuid']
 
     token = oa.get_other_token(id,password,uuid)
-    
-    jsonResult = {
-        'token' : token
-    }
+    if token is None:
+        jsonResult = {
+            'token' : token,
+            'loginresult': False
+        }
+        resJson = json.dumps(jsonResult)    
+        print("/login/project  -> ")
+        print(resJson)
+        return resJson
 
+    jsonResult = {
+        'token' : token,
+        'loginresult': True
+    }
     resJson = json.dumps(jsonResult)
     print("/login/project  -> ")
     print(resJson)

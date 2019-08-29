@@ -17,28 +17,27 @@
 */
 import React from "react";
 import Button from "components/CustomButtons/Button"
-import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardStyle.jsx";
-import withStyles from "@material-ui/core/styles/withStyles";
 
-class Popup extends React.Component {
-  constructor(){
-    super(...arguments);
-    this.state ={
-        uuid:'' 
-    };
+export default class Popup extends React.Component {
+  
+  constructor(props){
+    console.log(props)
+    super(props);
+    this.state = {uuid: "" };
+    this.handleRadio = this.handleRadio.bind(this);
   }
 
   handleRadio( event ) {
-    console.log(this.state.uuid)
-    this.setState({uuid: event.target.name})
+    this.setState({uuid: event.target.value})
   }
 
-  onSubmit( uuid ) {
-		let userInfo={
-			'id':this.props.UserID,
-      'password':this.props.Password,
-      'uuid': uuid
+  onSubmit( ) {
+	let userInfo={
+	    'id':this.props.UserID,
+        'password':this.props.Password,
+        'uuid': this.state.uuid
     };
+
     console.log(userInfo)
 		fetch('http://localhost:5000/login/project',{
 			method: 'POST',
@@ -49,22 +48,23 @@ class Popup extends React.Component {
 	    }).then((response)=> response.json())
 	    .then((responseData)=>{
 	    	if(responseData.loginresult){
-          // direct to dashboard
-        }
+                console.log(responseData)
+                // redirection with token
+            }
 	    	else{
-          // redicrect to login
+                // redicrect to login
 	    	}
       });
     }
     
   render() {
     const list = this.props.projects.map(
-      (info) => (        
-      <label>
-        <input type="radio" name={info} value={info} onChange={this.handleRadio} />
-        {info}
-      </label>)); 
-    
+        (info) => (        
+        <label>
+            <input type="radio" name="radAnswer" value={this.props.uuid[ Object.keys(this.props.projects).find(key => this.props.projects[key] === info)]} onChange={this.handleRadio} />
+            {info}
+        </label>)); 
+        
     return(
       <div>
         {list}
@@ -75,4 +75,4 @@ class Popup extends React.Component {
     );
   }
 }
-export default withStyles(dashboardStyle)(Popup);
+
