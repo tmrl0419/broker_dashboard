@@ -37,7 +37,6 @@ import image from "assets/img/sidebar-2.jpg";
 import logo from "assets/img/reactlogo.png";
 
 let ps;
-const token = null;
 var switchRoutes = (
   <Switch>
     {routes.map((prop, key) => {
@@ -56,29 +55,6 @@ var switchRoutes = (
   </Switch>
 );
 
-if (token != null){
-  console.log("Asdf")
-  switchRoutes = (
-    <Switch>
-      {routes.map((prop, key) => {
-        if (prop.layout === "/admin") {
-          return (
-            <Route
-              path={prop.layout + prop.path}
-              component={prop.component}
-              key={key}
-            />
-          );
-        }
-        return null;
-      })}
-      <Redirect from="/admin" to="/admin/dashboard" />
-    </Switch>
-  );
-}
-else {
-  
-}
 
 class Dashboard extends React.Component {
   state = {
@@ -135,18 +111,23 @@ class Dashboard extends React.Component {
   }
   render() {
     const { classes, ...rest } = this.props;
+    var isLogged = this.props.isLogged;
+    var isLogged = true;
     return (
       <div className={classes.wrapper}>
-        <Sidebar
-          routes={routes}
-          logoText={"Broker System"}
-          logo={logo}
-          image={this.state.image}
-          handleDrawerToggle={this.handleDrawerToggle}
-          open={this.state.mobileOpen}
-          color={this.state.color}
-          {...rest}
-        />
+        {isLogged ?
+          <Sidebar
+            routes={routes}
+            logoText={"Broker System"}
+            logo={logo}
+            image={this.state.image}
+            handleDrawerToggle={this.handleDrawerToggle}
+            open={this.state.mobileOpen}
+            color={this.state.color}
+            {...rest}/>
+          : null
+      }
+        
         <div className={classes.mainPanel} ref={this.mainPanel}>
           <Navbar
             routes={routes}
@@ -162,14 +143,6 @@ class Dashboard extends React.Component {
             <div className={classes.map}>{switchRoutes}</div>
           )}
           {this.getRoute() ? <Footer /> : null}
-          {/* <FixedPlugin
-            handleImageClick={this.handleImageClick}
-            handleColorClick={this.handleColorClick}
-            bgColor={this.state["color"]}
-            bgImage={this.state["image"]}
-            handleFixedClick={this.handleFixedClick}
-            fixedClasses={this.state.fixedClasses}
-          /> */}
         </div>
       </div>
     );

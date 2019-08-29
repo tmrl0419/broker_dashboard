@@ -28,28 +28,20 @@ import Graph from "components/Graph/Graph.jsx";
 import Board from "components/Board/Board.jsx";
 
 import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardStyle.jsx";
-import { thisExpression } from "@babel/types";
 
 class Dashboard extends React.Component {
   state = {
     value: 0,
     instance_list:[
       {
-        name: 'NONE',
-        cpu: 1,
-        memory: 2,
-        disk: 3,
-        rating: 4
-      },
-      {
-        name: 'NONE',
-        cpu: 5,
-        memory: 6,
-        disk: 7,
-        rating: 8
+        name: "NULL",
+        cpu: "0",
+        memory: "0",
+        disk: "0"
       }
+      
     ],
-    token: "gAAAAABdZUKVDlqv63snne_Edr44fCWkSyF4cqJlRnJYIZxcOpZNILFnGwbDFuraRMczYS3L8nhHNlm1TIdssa-vbjzTNB1NYxmYV15MQsU_ctfBDjQDVZSLnRq_6brv-XVNwDlmPe8eMwZTY1KNK0O6jY1kb2--a0R_0tV8PhJkslg-EmAsaLg"
+    token: "gAAAAABdaDB9ujV9LLO6xu68Mf7KEk0OrwJAcgsqCdu9vX2ldXoKtyDq_g99drH8Hg4ZvFGlPfsFO1lHLfBGNKCrDOfm2Pag6CpUsaIa4AKTO2_vgi6CE6FP_aEchH08PF6NTDappc9jwxPw_dUlyYUEZFZMOPqzP2zAAwuhC07YCYTpkVaIoPk"
   };
   handleChange = (event, value) => {
     this.setState({ value });
@@ -59,12 +51,7 @@ class Dashboard extends React.Component {
     this.setState({ value: index });
   };
 
-  startCheck = function(){
-      clearInterval(this.startCheck);
-      setInterval(()=>{
-        this.updating();
-      }, 5000)
-  }
+
 
   func = async () => {
     
@@ -82,12 +69,12 @@ class Dashboard extends React.Component {
     if (!response.ok) throw Error(response.message);
     try {
       const data = await response.json();
-      const temp = data['data']
-      console.log(data)
-      this.setState({
-        instance_list: [temp]
-      })
-      return data;
+      const temp = data['data'];
+      if (temp!== 'undifined' && temp.length > 0){
+        this.setState({
+          instance_list: temp
+        })
+      }
     } catch (err) {
       console.log(err)
     }
@@ -104,12 +91,13 @@ class Dashboard extends React.Component {
   constructor(props)
   {
     super(props);
-    this.startCheck();
-  }
+    this.mounted = false;
+    this.updating();
+    this.interval = setInterval(() => {
+      if(this.mounted) this.updating();
+    },5000)  }
 
   render() {
-    console.log("rerender")
-    const { classes } = this.props;
     return (
       <div>
         <InstanceList instance_list = {this.state.instance_list} />
@@ -117,6 +105,14 @@ class Dashboard extends React.Component {
         <Board/>
       </div>
     );
+  }
+  componentWillMount() {
+    this.mounted = true;
+  }
+
+  componentWillUnmount(){
+    this.mounted = false;
+    clearInterval(this.state.startCheck)
   }
 }
 

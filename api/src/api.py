@@ -53,8 +53,12 @@ def get_token(id,passwd):
     headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
     # TODO get project id
     res = requests.post(url_base + 'identity/v3/auth/tokens', headers=headers, data=json.dumps(data), verify=True)
-    token = res.headers['X-Subject-Token']
-    return token
+    try:
+        token = res.headers['X-Subject-Token']
+        return token
+    except Exception as e:
+        print(e)
+        return None
 
 def get_other_token(id, passwd, projectID):
     data = \

@@ -17,7 +17,6 @@ print(model)
 def hello_world():
     return 'Hello World!'
 
-
 @app.route("/login", methods=['POST'])
 def login():
     """Login Form"""
@@ -27,13 +26,19 @@ def login():
     id = data['id']
     password = data['password']
     token = oa.get_token(id,password)
+    if token is None:
+        jsonResult = {
+            'loginresult': None
+        }
+        resJson = json.dumps(jsonResult)
+        return resJson
     names, uuid = oa.get_projectID(token)
 
     jsonResult = {
         'projects' : names,
-        'uuid' : uuid
+        'uuid' : uuid,
+        'loginresult': 'true'
     }
-
     resJson = json.dumps(jsonResult)
     print("/login  -> ")
     print(resJson)
@@ -66,6 +71,7 @@ def instnaceInfo():
     print("/instanceInfo  <- ")
     token = request.args.get('token')
     server_names, server_uuid = oa.get_server_list(token)
+    print(server_names)
     data = []
     for i in range(len(server_uuid)):
         try:
@@ -76,11 +82,11 @@ def instnaceInfo():
             element['cpu'] = round(temp[0]*100,0)
             element['memory'] = round(temp[1]*100,0)
             element['disk'] = round(temp[2]*100, 0)
-            data.append(temp)
+            data.append(element)
         except Exception as e:
-            print(e)
+            pass
     jsonResult = {
-        'data': element
+        'data': data
     }
     res = make_response(jsonResult)
     resJson = json.dumps(jsonResult)
