@@ -41,7 +41,7 @@ class Dashboard extends React.Component {
       }
       
     ],
-    token: "gAAAAABdaDB9ujV9LLO6xu68Mf7KEk0OrwJAcgsqCdu9vX2ldXoKtyDq_g99drH8Hg4ZvFGlPfsFO1lHLfBGNKCrDOfm2Pag6CpUsaIa4AKTO2_vgi6CE6FP_aEchH08PF6NTDappc9jwxPw_dUlyYUEZFZMOPqzP2zAAwuhC07YCYTpkVaIoPk"
+    token: null
   };
   handleChange = (event, value) => {
     this.setState({ value });
@@ -98,6 +98,8 @@ class Dashboard extends React.Component {
     },5000)  }
 
   render() {
+    console.log("Dashboard");
+    console.log(this.props);
     return (
       <div>
         <InstanceList instance_list = {this.state.instance_list} />

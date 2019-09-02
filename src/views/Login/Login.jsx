@@ -32,31 +32,81 @@ import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardS
 import withStyles from "@material-ui/core/styles/withStyles";
 import SnackbarContent from "components/Snackbar/SnackbarContent.jsx";
 import Admin from "layouts/Admin"
-import Popup from "components/Popup/Popup"
-
+import { Redirect } from 'react-router-dom';
 
 class LoginPage extends React.Component {
   constructor(){
 		super(...arguments);
 		this.state ={
-			ID:'',
-      PW:'',
+			ID:'admin',
+      PW:'devstack',
       showPopup: false,
       isWrong: false,
       projects: null,
-      uuid: null
+      uuid: null,
+      token: null,
+      isLoggIn: false
     };
 		this.requestIDChange = this.requestIDChange.bind(this);
-		this.requestPWChange = this.requestPWChange.bind(this);
+    this.requestPWChange = this.requestPWChange.bind(this);
+    this.handleRadio = this.handleRadio.bind(this);
+    this.list = null
+    // this.handleRadio = this.handleRadio.bind(this);
+
   }
+  onSubmitRadio( ) {
+    let userInfo={
+        'id':this.state.ID,
+          'password':this.state.PW,
+          'uuid': this.state.uuid
+      };
   
+      console.log(userInfo)
+      fetch('http://localhost:5000/login/project',{
+        method: 'POST',
+        headers:{
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userInfo)
+        }).then((response)=> response.json())
+        .then((responseData)=>{
+          if(responseData.loginresult){
+            this.setState({
+              token: responseData.token
+            })
+            
+          } else{
+                  // redicrect to login
+          }
+        });
+      }
+
+  handleRadio( event ) {
+    this.setState({
+      uuid: event.target.value
+    });
+  }
+
   togglePopup(pjs, uuides) {
+    console.log(pjs, uuides)
+    if( pjs != null){
+      this.list = pjs.map(
+        (info) => (        
+        <label>
+            <input type="radio" name="radAnswer" value={uuides[ Object.keys(pjs).find(key => pjs[key] === info)]} onChange={this.handleRadio} />
+            {info}
+        </label>
+        )
+      ); 
+    }
+    
     this.setState({
       isWrong: false,
-      showPopup: !this.state.showPopup,
+      showPopup: true,
       projects: pjs,
       uuid: uuides
     });
+    
   }
 
 
@@ -80,7 +130,7 @@ class LoginPage extends React.Component {
 	    	}
 	    	else{
           this.setState({
-            requestPW:'',
+            PW: "",
             isWrong:true
           });
 	    	}
@@ -93,9 +143,19 @@ class LoginPage extends React.Component {
 	requestPWChange(event){
 		this.setState({PW: event.target.value});
 	}
-
+  
   render() {      
     const { classes } = this.props;
+    console.log(this.state.token)
+    if(this.state.token != null){
+      return <Redirect to={{
+        pathname: '/admin/dashboard',
+        state: {
+          isLogged: true,
+          token: this.state.token
+         }
+      }}/>
+     }
     return (
       <GridContainer>
         <GridItem md={12}>
@@ -104,13 +164,18 @@ class LoginPage extends React.Component {
               <h4 className={classes.cardTitleWhite}>LOGIN</h4>
             </CardHeader>
             <CardBody>
-              <InputWithLabel label= "UserID" name= "email" placeholder = "UserID" value={this.state.requestID} onChange={this.requestIDChange}/>
-              <InputWithLabel label= "PassWord" name="password" placeholder = "PW" value={this.state.requestPW} onChange={this.requestPWChange}/>
+              <InputWithLabel label= "UserID" name= "email" placeholder = "UserID" value={this.state.ID} onChange={this.requestIDChange}/>
+              <InputWithLabel label= "PassWord" name="password" placeholder = "PW" value={this.state.PW} onChange={this.requestPWChange}/>
               <Button color = "info" onClick={this.onSubmit.bind(this)} >SIGN IN</Button>
               {this.state.isWrong ? <SnackbarContent message="Please Check UserID/Password" color="danger"/> :null }
             </CardBody>
             { this.state.showPopup && !this.state.isWrong ? 
-            <Popup UserID = {this.state.ID} Password= {this.state.PW}projects = {this.state.projects} uuid = {this.state.uuid} text="SEX" closePopup={this.togglePopup.bind(this)} /> 
+              <div>
+                {this.list}
+              <div>
+                <Button color = "success" onClick={this.onSubmitRadio.bind(this)}>LOG IN</Button>
+              </div>
+            </div>   
             :null }
           </Card>
         </GridItem>

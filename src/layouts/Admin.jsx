@@ -36,6 +36,7 @@ import dashboardStyle from "assets/jss/material-dashboard-react/layouts/dashboar
 import image from "assets/img/sidebar-2.jpg";
 import logo from "assets/img/reactlogo.png";
 
+
 let ps;
 var switchRoutes = (
   <Switch>
@@ -51,7 +52,7 @@ var switchRoutes = (
       }
       return null;
     })}
-    <Redirect from="/admin" to="/admin/login" />
+    <Redirect from="/admin" to="/admin/dashboard" />
   </Switch>
 );
 
@@ -62,7 +63,8 @@ class Dashboard extends React.Component {
     color: "blue",
     hasImage: true,
     fixedClasses: "dropdown show",
-    mobileOpen: false
+    mobileOpen: false,
+    token: null
   };
   mainPanel = React.createRef();
   handleImageClick = image => {
@@ -110,12 +112,13 @@ class Dashboard extends React.Component {
     window.removeEventListener("resize", this.resizeFunction);
   }
   render() {
+    console.log("Admin");
     const { classes, ...rest } = this.props;
-    var isLogged = this.props.isLogged;
-    var isLogged = true;
+    console.log(this.props.location.state)
+
     return (
       <div className={classes.wrapper}>
-        {isLogged ?
+        {this.props.location.isLogged ?
           <Sidebar
             routes={routes}
             logoText={"Broker System"}
@@ -126,7 +129,7 @@ class Dashboard extends React.Component {
             color={this.state.color}
             {...rest}/>
           : null
-      }
+        }
         
         <div className={classes.mainPanel} ref={this.mainPanel}>
           <Navbar
