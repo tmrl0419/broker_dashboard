@@ -52,7 +52,6 @@ class Dashboard extends React.Component {
   };
 
 
-
   func = async () => {
     
     const settings = {
@@ -65,7 +64,7 @@ class Dashboard extends React.Component {
       token: this.state.token
     }
 
-    const response = await fetch('http://localhost:5000/instanceInfo?'+ "token=" + this.state.token, settings);
+    const response = await fetch('http://localhost:5000/instanceInfo?'+ "token=" + this.props.location.state.token, settings);
     if (!response.ok) throw Error(response.message);
     try {
       const data = await response.json();
@@ -99,7 +98,8 @@ class Dashboard extends React.Component {
 
   render() {
     console.log("Dashboard");
-    console.log(this.props);
+    console.log(this.props.location.state.token);
+
     return (
       <div>
         <InstanceList instance_list = {this.state.instance_list} />

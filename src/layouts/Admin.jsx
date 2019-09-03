@@ -36,28 +36,13 @@ import dashboardStyle from "assets/jss/material-dashboard-react/layouts/dashboar
 import image from "assets/img/sidebar-2.jpg";
 import logo from "assets/img/reactlogo.png";
 
-
 let ps;
-var switchRoutes = (
-  <Switch>
-    {routes.map((prop, key) => {
-      if (prop.layout === "/admin") {
-        return (
-          <Route
-            path={prop.layout + prop.path}
-            component={prop.component}
-            key={key}
-          />
-        );
-      }
-      return null;
-    })}
-    <Redirect from="/admin" to="/admin/dashboard" />
-  </Switch>
-);
 
 
 class Dashboard extends React.Component {
+  
+
+
   state = {
     image: image,
     color: "blue",
@@ -112,13 +97,58 @@ class Dashboard extends React.Component {
     window.removeEventListener("resize", this.resizeFunction);
   }
   render() {
+    var switchRoutes;
+    
+    {this.props.location.state ?
+      switchRoutes = (
+        <Switch>
+          {routes.map((prop, key) => {
+            if (prop.layout === "/admin") {
+              console.log("chk")
+              console.log(key)
+              return (
+                <Route
+                  path={prop.layout + prop.path}
+                  component={prop.component}
+                  key={key}
+                  token={this.props.location.state.token}
+                />
+              );
+            }
+            return null;
+          })}
+          <Redirect from="/admin" to="/admin/login" />
+        </Switch>
+      ) : 
+      switchRoutes = (
+        <Switch>
+          {routes.map((prop, key) => {
+            if (prop.layout === "/admin") {
+              console.log("chk")
+              console.log(key)
+              return (
+                <Route
+                  path={prop.layout + prop.path}
+                  component={prop.component}
+                  key={key}
+                />
+              );
+            }
+            return null;
+          })}
+          <Redirect from="/admin" to="/admin/login" />
+        </Switch>
+      );
+    };
+    
     console.log("Admin");
     const { classes, ...rest } = this.props;
     console.log(this.props.location.state)
 
     return (
       <div className={classes.wrapper}>
-        {this.props.location.isLogged ?
+
+        {this.props.location.state ?
           <Sidebar
             routes={routes}
             logoText={"Broker System"}
