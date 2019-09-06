@@ -19,7 +19,7 @@ import Card from "components/Card/Card.jsx";
 import CardHeader from "components/Card/CardHeader.jsx";
 import CardIcon from "components/Card/CardIcon.jsx";
 import CardFooter from "components/Card/CardFooter.jsx";
-
+import Button from "components/CustomButtons/Button.jsx"
 import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardStyle.jsx";
 
 const styles = theme => ({
@@ -29,10 +29,26 @@ const styles = theme => ({
 });
 
 
-function Instance(props) {
-      const { classes } = props;
-      const { data } = props;
-  
+export default class Instance extends React.Component{
+
+    constructor(props){
+      super(props);
+      this.state = {
+        rating: 0,
+        toggle: false
+      };
+      this.popUp = this.popUp.bind(this);
+    }
+
+    popUp(){
+      this.setState({
+        
+      })
+    }
+
+    render(){
+      const classes = this.props.classes;
+      const data  = this.props.data;
       return(
         <GridContainer>
           <Card xs={12} style={{flexDirection: 'row', justifyContent: 'flex-end' }}>
@@ -103,7 +119,7 @@ function Instance(props) {
                     <Accessibility />
                   </CardIcon>
                   <p className={classes.cardCategory}>Rating</p>
-                  <h3 className={classes.cardTitle}>{data.rating}<small>%</small></h3>
+                  <h3 className={classes.cardTitle}>{this.state.rating}<small>%</small></h3>
                 </CardHeader>
                 <CardFooter stats>
                   <div className={classes.stats}>
@@ -113,9 +129,14 @@ function Instance(props) {
                 </CardFooter>
               </Card>
             </GridItem>
+            <Button  onClick={this.popUp} >
+              Rating Request
+            </Button>
+            <Button  onClick={this.popUp} >
+              Auto Rating
+            </Button>
           </Card>
         </GridContainer>
       );
+    }
 }
-
-export default withStyles(dashboardStyle)(Instance);

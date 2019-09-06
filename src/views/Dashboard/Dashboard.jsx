@@ -91,18 +91,17 @@ class Dashboard extends React.Component {
   {
     super(props);
     this.mounted = false;
-    this.updating();
-    this.interval = setInterval(() => {
-      if(this.mounted) this.updating();
-    },5000)  }
+    // this.updating();
+    // this.interval = setInterval(() => {
+    //   if(this.mounted) this.updating();
+    // },5000)  
+  }
 
   render() {
-    console.log("Dashboard");
-    console.log(this.props.location.state.token);
 
     return (
       <div>
-        <InstanceList instance_list = {this.state.instance_list} />
+        <InstanceList instance_list = {this.state.instance_list} classes = {this.props.classes} />
         <Graph/>
         <Board/>
       </div>
