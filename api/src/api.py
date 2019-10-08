@@ -2,10 +2,10 @@ import requests
 import json
 import datetime
 
-url_base = "http://localhost/"
+url_base = "http://localhost"
 
 def get_projectID(token):
-    url = url_base + "identity/v3/auth/projects"
+    url = url_base + "/identity/v3/auth/projects"
     headers = {'Content-Type': 'application/json', 'X-Auth-Token': token}
     res = requests.get(url, headers=headers)
     body = res.json()
@@ -19,7 +19,7 @@ def get_projectID(token):
 def get_server_list(token):
     server_uuid = []
     server_names = []
-    url = url_base + "compute/v2.1/servers"
+    url = url_base + "/compute/v2.1/servers"
     headers = {'Content-Type': 'application/json', 'X-Auth-Token': token}
     res = requests.get(url, headers=headers)
     body = res.json()
@@ -52,7 +52,7 @@ def get_token(id,passwd):
     # pixed header
     headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
     # TODO get project id
-    res = requests.post(url_base + 'identity/v3/auth/tokens', headers=headers, data=json.dumps(data), verify=True)
+    res = requests.post(url_base + '/identity/v3/auth/tokens', headers=headers, data=json.dumps(data), verify=True)
     try:
         token = res.headers['X-Subject-Token']
         return token
@@ -84,13 +84,13 @@ def get_other_token(id, passwd, projectID):
             {"id": projectID }
     }
 
-    res = requests.post(url_base + 'identity/v3/auth/tokens', headers=headers, data=json.dumps(data), verify=True)
+    res = requests.post(url_base + '/identity/v3/auth/tokens', headers=headers, data=json.dumps(data), verify=True)
     token = res.headers['X-Subject-Token']
 
     return token
 
 def get_resource_list(token, instance_uuid):
-    url = url_base + "metric/v1/resource/generic/%s"%(instance_uuid)
+    url = url_base + "/metric/v1/resource/generic/%s"%(instance_uuid)
     headers = {'Content-Type': 'application/json, */*', 'X-Auth-Token':token}
     res = requests.get( url, headers = headers )
     body = res.json()
@@ -103,23 +103,23 @@ def get_mesuare_list(token, body):
     headers = {'Content-Type': 'application/json, */*', 'X-Auth-Token': token}
     PARAMS = {'start': None, 'granularity': None, 'resample': None, 'stop': None, 'aggregation': None, 'refresh': False}
 
-    url = url_base + 'metric/v1/metric/%s/measures'%(body['metrics']['cpu_util'])
+    url = url_base + '/metric/v1/metric/%s/measures'%(body['metrics']['cpu_util'])
     res = requests.get(url = url, headers = headers, params= PARAMS )
     cpu = res.json()[-1][2]/100
 
-    url = url_base + 'metric/v1/metric/%s/measures' % (body['metrics']['memory.usage'])
+    url = url_base + '/metric/v1/metric/%s/measures' % (body['metrics']['memory.usage'])
     res = requests.get(url=url, headers=headers, params=PARAMS)
     memory = res.json()[-1][2]/(1024)
 
-    url = url_base + 'metric/v1/metric/%s/measures' % (body['metrics']['memory'])
+    url = url_base + '/metric/v1/metric/%s/measures' % (body['metrics']['memory'])
     res = requests.get(url=url, headers=headers, params=PARAMS)
     memory /= res.json()[-1][2]/(1024)
 
-    url = url_base + 'metric/v1/metric/%s/measures' % (body['metrics']['disk.usage'])
+    url = url_base + '/metric/v1/metric/%s/measures' % (body['metrics']['disk.usage'])
     res = requests.get(url=url, headers=headers, params=PARAMS)
     disk = res.json()[-1][2]/(8*1024*1024*1024)
 
-    url = url_base + 'metric/v1/metric/%s/measures' % (body['metrics']['disk.root.size'])
+    url = url_base + '/metric/v1/metric/%s/measures' % (body['metrics']['disk.root.size'])
     res = requests.get(url=url, headers=headers, params=PARAMS)
     disk /= res.json()[-1][2]
 
@@ -129,18 +129,68 @@ def get_mesuare_list(token, body):
 
 def get_server_info(token,server_uuid):
     headers = {'Content-Type': 'application/json', 'X-Auth-Token': token}
-    url = url_base + 'compute/v2.1/servers/%s'%server_uuid
+    url = url_base + '/compute/v2.1/servers/%s'%server_uuid
     res = requests.get(url=url, headers=headers)
     return res.json()
 
 def get_flavor_info(token, flavorID):
     headers = {'Content-Type': 'application/json', 'X-Auth-Token': token}
-    url = url_base + 'compute/v2.1/os-simple-tenant-usage/%s' % flavorID
+    url = url_base + '/compute/v2.1/os-simple-tenant-usage/%s' % flavorID
     res = requests.get(url=url, headers=headers)
     return res.json()
+
+
+# USE Admin token 
+def createAlarm(token, uuid, cpu, memory, disk):
+    data = {
+        'alarm_actions': ['http://localhost:8000/alarm'],
+        'ok_actions': ['https://localhost:8000/ok'],
+        'insufficient_data_actions': ['https://localhost:8000/nodata'],
+        'name': 'cpu_hi',
+        'type': 'composite',
+        'composite_rule': {
+            "or": [
+                {
+                    "threshold": cpu if cpu!= None else 1,
+                    "metric": "cpu_util",
+                    "type": "gnocchi_resources_threshold",
+                    "resource_id": uuid,                    
+                    "resource_type": "instance",
+                     "aggregation_method": "last"
+                },
+                {
+                    "threshold": memory if memory!= None else 1,
+                    "metric": "cpu_util",
+                    "type": "gnocchi_resources_threshold",
+                    "resource_id": uuid,
+                    "resource_type": "instance",
+                     "aggregation_method": "last"
+                },
+                {
+                    "threshold": disk if disk!= None else 1,
+                    "metric": "cpu_util",
+                    "type": "gnocchi_resources_threshold",
+                    "resource_id": uuid,
+                    "resource_type": "instance",
+                     "aggregation_method": "last"
+                }
+            ]
+        }
+         
+    }
+    headers = {
+        'X-Auth-Token': token,
+        "Content-Type": "application/json"}
+    res = requests.post(url_base+":8042/v2/alarms", headers=headers, data=json.dumps(data))
+    s = res.content
+    u = str(s)
+    print(u)
+    return 
+
 
 if __name__ == '__main__':
     token = get_token('admin','devstack')
     get_projectID(token)
     get_server_list(token)
-    get_server_info(token)
+    get_server_info(token, '7e07034a-caf0-421c-a0af-333936e6a15c')
+    createAlarm(token, '7e07034a-caf0-421c-a0af-333936e6a15c', 0,0,0)

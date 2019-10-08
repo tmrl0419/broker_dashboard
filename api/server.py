@@ -103,13 +103,13 @@ def instnaceInfo():
     print(resJson)
     return res
 
-@app.route("/predict", methods=['get'])
-def predict():
+@app.route("/stackUpdate", methods=['get'])
+def stackUpdate():
+    print("/stackUpdate  <- ")
     global model
     global graph
     with graph.as_default():
         """Instance Inforamtion"""
-        print("/predict  <- ")
         # data = request.get_json()
         cpu = request.headers.get('cpu')
         memory = request.headers.get('memory')
@@ -120,18 +120,33 @@ def predict():
         except Exception as e:
             print(e)
 
+    jsonResult = {
+        'pred_cpu': pred_cpu,
+        'pred_memory': pred_memory,
+        'pred_disk': pred_disk
+    }
 
-        jsonResult = {
-            'pred_cpu': pred_cpu,
-            'pred_memory': pred_memory,
-            'pred_disk': pred_disk
-        }
+    resJson = json.dumps(str(jsonResult))
+    print("/stackUpdate  -> ")
+    print(resJson)
+    res = {'result': True}
+    return res
 
-        resJson = json.dumps(str(jsonResult))
-        print("/predict  -> ")
-        print(resJson)
-        res = {'result': True}
-        return res
+@app.route("/setAlarm", methods=['POST'])
+def setAlarm():
+    """Instance Inforamtion"""
+    print("/setAlarm  <- ")
+    body = request.get_json()
+    token = body['token']
+    instance_uuid = body['instance_uuid']
+    alarmCPU = body['cpu']
+    alarmMemory = body['memory']
+    alarmDisk = body['disk']
+    oa.createAlarm(toekn,instance_uuid,alarmCPU,alarmMemory,alarmDisk)
+
+    print("/setAlarm  -> ")
+    return res
+
 
 if __name__ == '__main__':
     app.run(host='localhost', port = 5000, debug = True)
