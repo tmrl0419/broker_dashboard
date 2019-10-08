@@ -148,6 +148,7 @@ class LoginPage extends React.Component {
     const { classes } = this.props;
     console.log(this.state.token)
     if(this.state.token != null){
+      console.log(this.state.token);
       return <Redirect to={{
         pathname: '/admin/dashboard',
         state: {

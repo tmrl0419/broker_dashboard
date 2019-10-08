@@ -99,13 +99,11 @@ class Dashboard extends React.Component {
   render() {
     var switchRoutes;
     
-    {this.props.location.state ?
+    {this.props.location.state?
       switchRoutes = (
         <Switch>
           {routes.map((prop, key) => {
             if (prop.layout === "/admin") {
-              console.log("chk")
-              console.log(key)
               return (
                 <Route
                   path={prop.layout + prop.path}
@@ -124,8 +122,7 @@ class Dashboard extends React.Component {
         <Switch>
           {routes.map((prop, key) => {
             if (prop.layout === "/admin") {
-              console.log("chk")
-              console.log(key)
+              console.log("not state")
               return (
                 <Route
                   path={prop.layout + prop.path}
@@ -143,7 +140,6 @@ class Dashboard extends React.Component {
     
     console.log("Admin");
     const { classes, ...rest } = this.props;
-    console.log(this.props.location.state)
 
     return (
       <div className={classes.wrapper}>

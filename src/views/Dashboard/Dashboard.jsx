@@ -63,11 +63,12 @@ class Dashboard extends React.Component {
       },
       token: this.state.token
     }
-
     const response = await fetch('http://localhost:5000/instanceInfo?'+ "token=" + this.props.location.state.token, settings);
     if (!response.ok) throw Error(response.message);
     try {
+      
       const data = await response.json();
+      console.log(data);
       const temp = data['data'];
       if (temp!== 'undifined' && temp.length > 0){
         this.setState({
@@ -91,14 +92,13 @@ class Dashboard extends React.Component {
   {
     super(props);
     this.mounted = false;
-    // this.updating();
-    // this.interval = setInterval(() => {
-    //   if(this.mounted) this.updating();
-    // },5000)  
+    this.updating();
+    this.interval = setInterval(() => {
+      if(this.mounted) this.updating();
+    },5000)  
   }
 
   render() {
-
     return (
       <div>
         <InstanceList instance_list = {this.state.instance_list} classes = {this.props.classes} />
