@@ -33,7 +33,8 @@ def predict(cpu, memory, storage, rating, model):
 
 if __name__ == '__main__':
     model = load_model("model")
-    test(model)
+    print(predict(10,10,10,10,model))
+    #test(model)
 
 
 
