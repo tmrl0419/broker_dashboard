@@ -31,7 +31,6 @@ import Button from "components/CustomButtons/Button"
 import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardStyle.jsx";
 import withStyles from "@material-ui/core/styles/withStyles";
 import SnackbarContent from "components/Snackbar/SnackbarContent.jsx";
-import Admin from "layouts/Admin"
 import { Redirect } from 'react-router-dom';
 
 class LoginPage extends React.Component {
@@ -79,7 +78,7 @@ class LoginPage extends React.Component {
                   // redicrect to login
           }
         });
-      }
+  }
 
   handleRadio( event ) {
     this.setState({
@@ -106,16 +105,13 @@ class LoginPage extends React.Component {
       projects: pjs,
       uuid: uuides
     });
-    
   }
-
 
   onSubmit(){
 		let userInfo={
 			'id':this.state.ID,
 			'password':this.state.PW
     };
-    console.log(userInfo)
 		fetch('http://localhost:5000/login',{
 			method: 'POST',
 			headers:{
@@ -125,7 +121,6 @@ class LoginPage extends React.Component {
 	    }).then((response)=> response.json())
 	    .then((responseData)=>{
 	    	if(responseData.loginresult){
-          console.log(responseData.projects)
           this.togglePopup(responseData.projects,responseData.uuid);
 	    	}
 	    	else{
@@ -146,14 +141,13 @@ class LoginPage extends React.Component {
   
   render() {      
     const { classes } = this.props;
-    console.log(this.state.token)
     if(this.state.token != null){
-      console.log(this.state.token);
       return <Redirect to={{
         pathname: '/admin/dashboard',
         state: {
           isLogged: true,
-          token: this.state.token
+          token: this.state.token,
+          project_uuid: this.state.uuid
          }
       }}/>
      }

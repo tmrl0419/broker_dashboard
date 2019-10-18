@@ -5,23 +5,26 @@ import src.api as oa
 import src.model as om
 import src.heat as oh
 import tensorflow as tf
+import datetime
 from tensorflow.python.keras.backend import set_session
 
 app = Flask(__name__)
 cors = CORS(app, resources={
+  r"/*": {"origin": "*"},
+  r"/stackUpdate/*": {"origin": "*"},
   r"/login/*": {"origin": "*"},
-  r"/instanceInfo/*": {"origin": "*"},
+  r"/instanceInfo/*": {"origin": "*"}
 })
 
 sess = tf.Session()
 graph = tf.get_default_graph()
 set_session(sess)
 model = om.load_model('model/model')
+set_session(sess)
 
-
-@app.route('/')
+@app.route('/', methods=['POST'])
 def hello_world():
-    return 'Hello World!'
+    return 'Hello Fucking world'
 
 @app.route("/login", methods=['POST'])
 def login():
@@ -88,7 +91,6 @@ def instnaceInfo():
     token = request.args.get('token')
     server_names, server_uuid = oa.get_server_list(token)
     data = []
-    print(token)
     for i in range(len(server_uuid)):
         try:
             res = oa.get_resource_list(token, server_uuid[i])
@@ -98,8 +100,11 @@ def instnaceInfo():
             element['cpu'] = round(temp[0]*100,0)
             element['memory'] = round(temp[1]*100,0)
             element['disk'] = round(temp[2]*100, 0)
+            element['flavor_cpu'] , element['flavor_memory'] ,element['flavor_storage'] = oa.get_resource_size(token,server_uuid[i])
+            element['project_id'] = oa.get_server_info(token,server_uuid[i])['server']['tenant_id']
             data.append(element)
         except Exception as e:
+            print(e)
             pass
     jsonResult = {
         'data': data
@@ -107,40 +112,38 @@ def instnaceInfo():
     res = make_response(jsonResult)
     resJson = json.dumps(jsonResult)
     print("/instanceInfo  -> ")
-    print(resJson)
+    # print(resJson)
     return res
 
 # write rating cpu memory log ( '{uuid}.json' )
 # always get admin token and use it
-@app.route("/stackUpdate", methods=['GET'])
+@app.route("/stackUpdate", methods=['POST'])
 def stackUpdate():
     print("/stackUpdate  <- ")
     global model
     global sess
     global graph
     with graph.as_default():
-        
         set_session(sess)
-
-        server_name = request.args.get('name')
-        server_uuid = request.args.get('uuid')
-        rating = request.args.get('rating')
-        token = request.args.get('token')
-        project_id = request.args.get('project_id')
-
-        # print( oh.extractTemplate("admin","test","admin-openrc.sh",token) )
-
+        body = request.get_json()
+        print(body)
+        token = body['token']
+        server_name = body['server_name']
+        rating = str(body['rating'])
+        print(rating)
+        project_id = body['project_id']
+        server_id = oa.get_server_id(token, server_name)
         try:
-            res = oa.get_resource_list(token, server_uuid)
+            res = oa.get_resource_list(token, server_id)
             temp = list(oa.get_mesuare_list(token, res))
             cpu = round(temp[0]*100,0)
             memory  = round(temp[1]*100,0)
             storage = round(temp[2]*100, 0)
-            cpu = 80
+            cpu = 10
             memory  = 80
-            storage = 80
+            storage = 30
+            
             # data store ( Object file ) Swift 
-
             print(cpu,memory,storage)
             with graph.as_default():
                 try:
@@ -148,29 +151,34 @@ def stackUpdate():
                     print(pred_cpu, pred_memory, pred_storage)
                     if( pred_cpu != 1 or pred_memory != 1  or pred_storage != 1 ):
                         print("Need to Change")
-                        print(oa.get_resource_size(token,server_uuid))
-                        cpu, memory, storage = oa.get_resource_size(token,server_uuid)
+                        cpu, memory, storage = oa.get_resource_size(token,server_id)
                         cpu *= pred_cpu.round()
                         memory *= pred_memory.round(1)
                         storage *= pred_storage
                         memory = memory.round(1)*1024
                         storage = storage.round(1)
-                        print(cpu,memory,storage)
-                        print("Asdf")
+                        flavor_prevID = oa.get_flavor_id(token,server_id)
+                        flavor_name = server_name + str(datetime.datetime.now())
                         try:
-                            print(oa.create_flavor(token, 'tetttt', int(cpu), int(memory), int(storage)))
+                            oa.create_flavor(token, flavor_name, int(cpu), int(memory), int(storage))
+                            print("arrive here")
+                            try:
+                                oh.resizeTemplate(project_id, server_name, server_id, flavor_name, token)
+                                print("arrive here10")
+                            except Exception as e:
+                                print(e)
+                                pass       
+                            # flavor remove
+                            # oa.remove_flavor(token, flavor_prevID)
                         except Exception as e:
                             print(e)
                             pass
-                        print("hihi")
-                        oh.resizeTemplate(project_id, server_name, server_uuid, 'tetttt', token)
                         # resize here
                     else:
                         if(rating <= 20):
                             print("Need to copy and move")
                         else: 
                             print("Don't need change")
-
                     jsonResult = {
                         'pred_cpu': pred_cpu,
                         'pred_memory': pred_memory,
@@ -186,7 +194,7 @@ def stackUpdate():
                     return {'reslut': False}
         except Exception as e:
             return {'reslut': False}
-    
+
 
 @app.route("/setAlarm", methods=['POST'])
 def setAlarm():
@@ -199,8 +207,27 @@ def setAlarm():
     alarmMemory = body['memory']
     alarmDisk = body['disk']
     oa.createAlarm(token,instance_uuid,alarmCPU,alarmMemory,alarmDisk)
-    res = { result: True}
+    res = { "result" : True}
     print("/setAlarm  -> ")
+    return res
+
+@app.route("/createStack", methods=['POST'])
+def createStack():
+    print("/createStack  <- ")
+    data = request.get_json()
+    project_id = data['project_id']
+    server_name= data['server_name']
+    stack_name = data['stack_name']
+    flavor =  data['flavor']
+    image =  data['image']
+    token =  data['token']
+    res = {"result":True}
+    try:
+        print(oh.createStack(project_id, server_name, stack_name, flavor,image, token))
+    except Exception as e:
+        print(e)
+        return {"result": False}
+    print("/createStack  -> ")
     return res
 
 

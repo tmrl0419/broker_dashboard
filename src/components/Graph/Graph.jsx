@@ -45,28 +45,25 @@ function Graph(props){
     return(
         <GridContainer>
           <GridItem xs={12} sm={12} md={4}>
-            <Card chart>
-              <CardHeader color="success">
+          <Card chart>
+              <CardHeader color="danger">
                 <ChartistGraph
                   className="ct-chart"
-                  data={dailySalesChart.data}
+                  data={completedTasksChart.data}
                   type="Line"
-                  options={dailySalesChart.options}
-                  listener={dailySalesChart.animation}
+                  options={completedTasksChart.options}
+                  listener={completedTasksChart.animation}
                 />
               </CardHeader>
               <CardBody>
-                <h4 className={classes.cardTitle}>Daily Sales</h4>
+                <h4 className={classes.cardTitle}>CPU</h4>
                 <p className={classes.cardCategory}>
-                  <span className={classes.successText}>
-                    <ArrowUpward className={classes.upArrowCardCategory} /> 55%
-                  </span>{" "}
-                  increase in today sales.
+
                 </p>
               </CardBody>
               <CardFooter chart>
                 <div className={classes.stats}>
-                  <AccessTime /> updated 4 minutes ago
+                  <AccessTime /> campaign sent 2 days ago
                 </div>
               </CardFooter>
             </Card>
@@ -84,7 +81,7 @@ function Graph(props){
                 />
               </CardHeader>
               <CardBody>
-                <h4 className={classes.cardTitle}>Email Subscriptions</h4>
+                <h4 className={classes.cardTitle}>MEMORY</h4>
                 <p className={classes.cardCategory}>
                   Last Campaign Performance
                 </p>
@@ -108,7 +105,7 @@ function Graph(props){
                 />
               </CardHeader>
               <CardBody>
-                <h4 className={classes.cardTitle}>Completed Tasks</h4>
+                <h4 className={classes.cardTitle}>STORAGE</h4>
                 <p className={classes.cardCategory}>
                   Last Campaign Performance
                 </p>
@@ -120,6 +117,7 @@ function Graph(props){
               </CardFooter>
             </Card>
           </GridItem>
+          
         </GridContainer>
     );
 }

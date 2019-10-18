@@ -37,7 +37,8 @@ class Dashboard extends React.Component {
         name: "NULL",
         cpu: "0",
         memory: "0",
-        disk: "0"
+        disk: "0",
+        project_id: this.props.location.state.proejct_uuid
       }
       
     ],
@@ -58,17 +59,14 @@ class Dashboard extends React.Component {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'token': this.state.token
-      },
-      token: this.state.token
+        'Content-Type': 'application/json'
+      }
     }
+    console.log(this.state.project_id)
     const response = await fetch('http://localhost:5000/instanceInfo?'+ "token=" + this.props.location.state.token, settings);
     if (!response.ok) throw Error(response.message);
     try {
-      
       const data = await response.json();
-      console.log(data);
       const temp = data['data'];
       if (temp!== 'undifined' && temp.length > 0){
         this.setState({
@@ -99,9 +97,10 @@ class Dashboard extends React.Component {
   }
 
   render() {
+
     return (
       <div>
-        <InstanceList instance_list = {this.state.instance_list} classes = {this.props.classes} />
+        <InstanceList token = {this.props.location.state.token} instance_list = {this.state.instance_list}  classes = {this.props.classes} />
         <Graph/>
         <Board/>
       </div>

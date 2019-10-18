@@ -8,11 +8,12 @@ import withStyles from "@material-ui/core/styles/withStyles";
 // core components
 import Instance from "./Instance.jsx";
 import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardStyle.jsx";
+import { array } from "prop-types";
 
 function InstanceList(props){
-  const { instance_list } = props;
+  const { instance_list, token } = props;
   const list = instance_list.map(
-    (info) => (console.log(info),<Instance data={info} classes={this,props.classes}/>)
+    (info) => (console.log(info),<Instance token = {token} data={info} classes={this,props.classes}/>)
   );
   return(
     <div>

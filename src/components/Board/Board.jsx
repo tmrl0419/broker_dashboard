@@ -43,7 +43,7 @@ function Board(props){
     return(
         <GridContainer>
           <GridItem xs={12} sm={12} md={6}>
-            <CustomTabs
+            {/*<CustomTabs
               title="Tasks:"
               headerColor="primary"
               tabs={[
@@ -81,9 +81,9 @@ function Board(props){
                   )
                 }
               ]}
-            />
+            />*/}
           </GridItem>
-          <GridItem xs={12} sm={12} md={6}>
+          {/*<GridItem xs={12} sm={12} md={6}>
             <Card>
               <CardHeader color="warning">
                 <h4 className={classes.cardTitleWhite}>Employees Stats</h4>
@@ -104,7 +104,7 @@ function Board(props){
                 />
               </CardBody>
             </Card>
-          </GridItem>
+                </GridItem>*/}
         </GridContainer>
     );
 }
