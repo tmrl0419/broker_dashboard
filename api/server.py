@@ -97,7 +97,7 @@ def instnaceInfo():
             temp = list(oa.get_mesuare_list(token, res))
             element = {}
             element['name'] = server_names[i]
-            element['cpu'] = round(temp[0]*100,0)
+            element['cpu'] = round(temp[0],0)
             element['memory'] = round(temp[1]*100,0)
             element['disk'] = round(temp[2]*100, 0)
             element['flavor_cpu'] , element['flavor_memory'] ,element['flavor_storage'] = oa.get_resource_size(token,server_uuid[i])
@@ -129,20 +129,19 @@ def stackUpdate():
         print(body)
         token = body['token']
         server_name = body['server_name']
-        rating = str(body['rating'])
+        rating = int(body['rating'])
         print(rating)
         project_id = body['project_id']
         server_id = oa.get_server_id(token, server_name)
         try:
             res = oa.get_resource_list(token, server_id)
             temp = list(oa.get_mesuare_list(token, res))
-            cpu = round(temp[0]*100,0)
+            cpu = round(temp[0],0)
             memory  = round(temp[1]*100,0)
             storage = round(temp[2]*100, 0)
-            cpu = 10
-            memory  = 80
-            storage = 30
-            
+            # cpu = 10
+            # memory  = 80
+            # storage = 10
             # data store ( Object file ) Swift 
             print(cpu,memory,storage)
             with graph.as_default():
@@ -163,7 +162,7 @@ def stackUpdate():
                             oa.create_flavor(token, flavor_name, int(cpu), int(memory), int(storage))
                             print("arrive here")
                             try:
-                                oh.resizeTemplate(project_id, server_name, server_id, flavor_name, token)
+                                print( oh.resizeTemplate(project_id, server_name, server_id, flavor_name, token) )
                                 print("arrive here10")
                             except Exception as e:
                                 print(e)
@@ -193,6 +192,7 @@ def stackUpdate():
                     print(e)
                     return {'reslut': False}
         except Exception as e:
+            print(e)
             return {'reslut': False}
 
 

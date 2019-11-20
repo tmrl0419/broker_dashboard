@@ -62,7 +62,6 @@ class Dashboard extends React.Component {
         'Content-Type': 'application/json'
       }
     }
-    console.log(this.state.project_id)
     const response = await fetch('http://localhost:5000/instanceInfo?'+ "token=" + this.props.location.state.token, settings);
     if (!response.ok) throw Error(response.message);
     try {

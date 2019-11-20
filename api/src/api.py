@@ -169,11 +169,11 @@ def get_mesuare_list(token, body):
     url = url_base + '/metric/v1/metric/%s/measures'%(body['metrics']['cpu_util'])
     res = requests.get(url = url, headers = headers, params= PARAMS )
     cpu = res.json()[-1][2]
-
+    
     url = url_base + '/metric/v1/metric/%s/measures' % (body['metrics']['memory.usage'])
     res = requests.get(url=url, headers=headers, params=PARAMS)
     memory = res.json()[-1][2]/(1024)
-
+    
     url = url_base + '/metric/v1/metric/%s/measures' % (body['metrics']['memory'])
     res = requests.get(url=url, headers=headers, params=PARAMS)
     memory /= res.json()[-1][2]/(1024)

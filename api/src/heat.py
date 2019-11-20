@@ -172,11 +172,13 @@ def resizeTemplate(project_id : str, server_name : str, server_id : str, flavor 
             "volume_id": { "get_resource": newVolume }
         }
     }
+    print(HOT)
     print("resize here4")
     updateStack(project_id, stack, stackID, HOT, x_auth_token)
     time.sleep(240)
     del HOT["resources"][volumeInfo["name"]]
     print("resize here5")
+    print(HOT)
     deleteSnapshotVolume(project_id, snapshotID, x_auth_token)
     updateStack(project_id, stack, stackID, HOT, x_auth_token)
     saveTemplate(project_id, "TemplateContainer", server_name+".yaml", yaml.dump(HOT), x_auth_token)
@@ -267,3 +269,6 @@ def newResource(project_id : str, name : str, img : str, flavor : str, size : in
 /v3/{project_id}/volumes/{volume_id} [GET] : Show a volume`s details, getVolumeName() : return volume["volume"]["name"].split("-")
 /servers/{server_id}/os-volume_attachments : Get a volume`s details, getAttachedVolume() : return attachments["volumeAttachments"][0]["tag"] --> ?? is correct??
 '''
+
+if __name__ == '__main__':
+    createStack('cf1aecc1d9b1432fb37d9c5eaa7c0fe6', 'test', 'test','ds1G','cirros-0.3.5-x86_64-disk', 'gAAAAABdyW0jQD_O_Dq5YXRqFPLQ86FDYgWHKxkyL0AOEmTwwpAIMS4YNUg48lawC_Zdm7mF8UfBUIlMi1m-TxwJhfE6Djoyqe52MnfP4MiqIsoILOlYf8v4JiWSSb7bcB4vj1xhP7iYfkmLDl5PT3YgbRKaN0lPSCHmXCtxiAKNPDp6auv5LFQ')
