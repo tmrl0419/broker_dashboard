@@ -32,15 +32,69 @@ export default class Instance extends React.Component{
         cpu : 0,
         memory : 0,
         disk : 0,
-        name : 0
+        name : 0,
+        Auto: false,
+        Interval: null
       };
+      this.autoMode = this.autoMode.bind(this);
+      this.update = this.update.bind(this);
+      // this.autoRatingCallback = this.autoRatingCallback.bind(this);
+      // this.stackUpdateCallback = this.stackUpdateCallback.bind(this);
+      var timer;
+    }
+
+    update = async () => {
+      const { data,token }  = this.props
+      let stackInfo={
+        token: token,
+        server_name: data.name,
+        rating: this.state.rating,
+        project_id : data.project_id
+      };
+      fetch('http://localhost:5000/stackUpdate',{
+        method: 'POST',
+        headers:{
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(stackInfo)
+        }).then((response)=> response.json())
+        .then((responseData)=>{
+          console.log(responseData)
+        });
+    }
+
+    autoMode = (time) => { 
+      var self = this;
+      this.timer = setInterval( function(){
+        console.log(this.state);
+        console.log("updated!!");
+        console.log(time);
+        self.update();
+      }, time*1000 );
     }
 
 
-    ratingCallback = (childRating) =>{
+
+    stackUpdateCallback = (childRating) =>{
+      if(this.state.Auto == true) clearInterval(this.timer);
       this.setState({
-        rating: childRating
-      })
+        rating: childRating,
+        Auto: false 
+      }, () =>{
+        this.update();
+      });
+    }
+
+    autoRatingCallback = (childInterval) => {
+      if ( typeof(childInterval) != 'number' || childInterval < 1){
+        return;  
+      }
+      this.setState({
+        Auto: true,
+        Interval: childInterval
+      }, () =>{
+        this.autoMode(this.state.Interval)
+      });
     }
 
     render(){
@@ -51,7 +105,9 @@ export default class Instance extends React.Component{
         <GridContainer>
           <Card xs={12} style={{flexDirection: 'row', justifyContent: 'flex-end' }}>
             <CardHeader color="primary" stats icon>
-              <p className={classes.cardCategory}>{data.name}</p>
+              <p className={classes.cardTitle} >{data.name}</p>
+              { this.state.Auto ? <label className={classes.cardTitle} style={{color:'red'}} >Auto mode</label> : <label className={classes.cardTitle} style={{color:'blue'}}>Non- Auto mode</label>}
+              
             </CardHeader>
             <GridItem xs={12} sm={6} md={3}>
               <Card >  
@@ -133,9 +189,12 @@ export default class Instance extends React.Component{
                 </CardFooter>
               </Card>
             </GridItem>
-            <StackUpdate data={data} token={this.props.token} callbackFromParent={this.ratingCallback}/>
-            <AutoRating/>
-            <Threshold/>
+            <div>
+              <StackUpdate data={data} token={this.props.token} callbackFromParent={this.stackUpdateCallback} />
+              <AutoRating callbackFromParent={this.autoRatingCallback}/>
+              <Threshold/>
+            </div>
+            
           </Card>
         </GridContainer>
       );

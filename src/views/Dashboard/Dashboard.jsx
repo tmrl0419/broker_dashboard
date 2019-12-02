@@ -26,24 +26,20 @@ import withStyles from "@material-ui/core/styles/withStyles";
 import InstanceList from "components/InstanceList/InstanceList.jsx";
 import Graph from "components/Graph/Graph.jsx";
 import Board from "components/Board/Board.jsx";
+import CreateInstance from "components/Dialog/CreateInstance";
+
 
 import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardStyle.jsx";
+import { createNoSubstitutionTemplateLiteral } from "typescript";
 
 class Dashboard extends React.Component {
   state = {
     value: 0,
     instance_list:[
-      {
-        name: "NULL",
-        cpu: "0",
-        memory: "0",
-        disk: "0",
-        project_id: this.props.location.state.proejct_uuid
-      }
-      
     ],
-    token: null
+    project_id: null
   };
+
   handleChange = (event, value) => {
     this.setState({ value });
   };
@@ -52,8 +48,29 @@ class Dashboard extends React.Component {
     this.setState({ value: index });
   };
 
+  createInstanceCallback = async (stackName, instanceName, flavor, image) =>{
+    let stackInfo={
+      "token": this.props.location.state.token,
+      "server_name": instanceName,
+      "stack_name": stackName,
+      "flavor": flavor,
+      "image": image,
+      "project_id" : this.props.location.state.project_uuid,
+    };
+    fetch('http://localhost:5000/createStack',{
+      method: 'POST',
+      headers:{
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(stackInfo)
+      }).then((response)=> response.json())
+      .then((responseData)=>{
+        console.log(responseData)
+    });
+  }
 
-  func = async () => {
+
+  getInstanceInfo = async () => {
     
     const settings = {
       method: 'GET',
@@ -79,7 +96,7 @@ class Dashboard extends React.Component {
 
   async updating(){
     try{
-      this.func();  
+      this.getInstanceInfo();  
     } catch(e){
       console.log(e);
     }
@@ -92,13 +109,13 @@ class Dashboard extends React.Component {
     this.updating();
     this.interval = setInterval(() => {
       if(this.mounted) this.updating();
-    },5000)  
+    },30000)  
   }
 
   render() {
-
     return (
       <div>
+        <CreateInstance token = {this.props.location.state.token} callbackFromParent={this.createInstanceCallback}/>
         <InstanceList token = {this.props.location.state.token} instance_list = {this.state.instance_list}  classes = {this.props.classes} />
         <Graph/>
         <Board/>

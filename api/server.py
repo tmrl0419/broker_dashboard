@@ -24,7 +24,7 @@ set_session(sess)
 
 @app.route('/', methods=['POST'])
 def hello_world():
-    return 'Hello Fucking world'
+    return 'Hello world'
 
 @app.route("/login", methods=['POST'])
 def login():
@@ -110,7 +110,6 @@ def instnaceInfo():
         'data': data
     }
     res = make_response(jsonResult)
-    resJson = json.dumps(jsonResult)
     print("/instanceInfo  -> ")
     # print(resJson)
     return res
@@ -139,9 +138,9 @@ def stackUpdate():
             cpu = round(temp[0],0)
             memory  = round(temp[1]*100,0)
             storage = round(temp[2]*100, 0)
-            # cpu = 10
-            # memory  = 80
-            # storage = 10
+            cpu = 30
+            memory = 80
+            storage = 30
             # data store ( Object file ) Swift 
             print(cpu,memory,storage)
             with graph.as_default():
@@ -215,6 +214,7 @@ def setAlarm():
 def createStack():
     print("/createStack  <- ")
     data = request.get_json()
+    print(data)
     project_id = data['project_id']
     server_name= data['server_name']
     stack_name = data['stack_name']
@@ -228,6 +228,29 @@ def createStack():
         print(e)
         return {"result": False}
     print("/createStack  -> ")
+    return res
+
+@app.route("/createInfo", methods=['GET'])
+def createInfo():
+    print("/createInfo  <- ")
+
+    token = request.args.get('token')
+
+    images = oa.get_image_list(token)
+    flavors = oa.get_flavor_list(token)
+    
+    # image_list = { k: v for k1, k2, v1, v2 in data from k, v in }
+    # image_list = {  "key": elem['id'], "value": elem['name']  for elem in images['images'] }
+    image_list = { elem['id']: elem['name'] for elem in images['images'] }
+    flavor_list = { elem['id']: elem['name'] for elem in flavors['flavors'] }
+
+    res = {
+        'images': image_list,
+        'flavors': flavor_list
+    }
+
+    res = make_response(res)
+    print("/createInfo  -> ")
     return res
 
 

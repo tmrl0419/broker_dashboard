@@ -27,7 +27,11 @@ def test(model):
     print(y)
 
 def predict(cpu, memory, storage, rating, model):
+    output = [layer.output for layer in model.layers]
     y = model.predict(np.array([cpu, memory, storage, rating]).reshape(1, 4))
+    print("this is output")
+    print(output)
+    print(model.summary)
     print(y)
     return y[0][0], y[0][1], y[0][2]
 

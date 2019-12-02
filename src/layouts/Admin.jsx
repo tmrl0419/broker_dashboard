@@ -104,14 +104,13 @@ class Dashboard extends React.Component {
         <Switch>
           {routes.map((prop, key) => {
             if (prop.layout === "/admin") {
-              console.log("chk")
-              console.log(key)
               return (
                 <Route
                   path={prop.layout + prop.path}
                   component={prop.component}
                   key={key}
                   token={this.props.location.state.token}
+                  project_uuid={this.props.location.state.project_uuid}
                 />
               );
             }

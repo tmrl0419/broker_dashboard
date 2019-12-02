@@ -4,46 +4,7 @@ import datetime
 
 url_base = "http://localhost"
 
-def get_projectID(token):
-    url = url_base + "/identity/v3/auth/projects"
-    headers = {'Content-Type': 'application/json', 'X-Auth-Token': token}
-    res = requests.get(url, headers=headers)
-    body = res.json()
-
-    projects_name = [x['name'] for x in body['projects'] if not x['name'] == "invisible_to_admin"]
-    projects_uuid = [ x['id'] for x in body['projects'] if not x['name'] == "invisible_to_admin"]
-
-    return projects_name, projects_uuid
-
-# for ask what kinds of instances admin control on dashboard
-def get_server_list(token):
-    server_uuid = []
-    server_names = []
-    url = url_base + "/compute/v2.1/servers"
-    headers = {'Content-Type': 'application/json', 'X-Auth-Token': token}
-    res = requests.get(url, headers=headers)
-    body = res.json()
-    try:
-        server_uuid = [ x['id'] for x in body['servers']]
-        server_names = [ x['name'] for x in body['servers']]
-    except:
-        pass
-    
-    return server_names, server_uuid
-
-def get_server_id(token, server_name):
-    server_names, server_uuid = get_server_list(token)
-    index = -1
-    for i in range(len(server_names)):
-        if(server_name == server_names[i]):
-            index = i
-            break
-    if(index != -1):
-        return server_uuid[index]
-    else:
-        return -1
-
-
+### Keystone API
 def get_token(id,passwd):
     data = \
         {"auth":
@@ -108,6 +69,90 @@ def get_other_token(id, passwd, projectID):
 
     return token
 
+def get_token_by_token(token,project_id):
+    data = \
+        {
+            "auth": {
+                "identity": {
+                    "methods": [
+                        "token"
+                    ],
+                    "token": {
+                        "id": token
+                    }
+                },
+                "scope": {
+                    "project": {
+                        "id": project_id
+                    }
+                }
+            }
+        }
+
+
+    # pixed header
+    headers = {'Content-Type': 'application/json', 'Accept': 'application/json', "X-Auth-Token":token}
+    # TODO get project id
+    res = requests.post(url_base + '/identity/v3/auth/tokens', headers=headers, data=json.dumps(data), verify=True)
+    try:
+        token = res.headers['X-Subject-Token']
+        return token
+    except Exception as e:
+        print(e)
+        return None
+
+
+
+### Project API
+def get_projectID(token):
+    url = url_base + "/identity/v3/auth/projects"
+    headers = {'Content-Type': 'application/json', 'X-Auth-Token': token}
+    res = requests.get(url, headers=headers)
+    body = res.json()
+
+    projects_name = [x['name'] for x in body['projects'] if not x['name'] == "invisible_to_admin"]
+    projects_uuid = [ x['id'] for x in body['projects'] if not x['name'] == "invisible_to_admin"]
+
+    return projects_name, projects_uuid
+
+### Instance API
+
+# for ask what kinds of instances admin control on dashboard
+def get_server_list(token):
+    server_uuid = []
+    server_names = []
+    url = url_base + "/compute/v2.1/servers"
+    headers = {'Content-Type': 'application/json', 'X-Auth-Token': token}
+    res = requests.get(url, headers=headers)
+    body = res.json()
+    try:
+        server_uuid = [ x['id'] for x in body['servers']]
+        server_names = [ x['name'] for x in body['servers']]
+    except:
+        pass
+    
+    return server_names, server_uuid
+
+def get_server_id(token, server_name):
+    server_names, server_uuid = get_server_list(token)
+    index = -1
+    for i in range(len(server_names)):
+        if(server_name == server_names[i]):
+            index = i
+            break
+    if(index != -1):
+        return server_uuid[index]
+    else:
+        return -1
+
+
+def get_server_info(token,server_uuid):
+    headers = {'Content-Type': 'application/json', 'X-Auth-Token': token}
+    url = url_base + '/compute/v2.1/servers/%s'%server_uuid
+    res = requests.get(url=url, headers=headers)
+    return res.json()
+
+
 def get_resource_list(token, server_uuid):
     url = url_base + "/metric/v1/resource/generic/%s"%(server_uuid)
     headers = {'Content-Type': 'application/json, */*', 'X-Auth-Token':token}
@@ -115,23 +160,6 @@ def get_resource_list(token, server_uuid):
     body = res.json()
     return body
 
-# def get_stack_resource_list(token, project_id):
-#     url = url_base + "/heat-api/v1/%s/stacks" %(project_id)
-#     headers = {'Content-Type': 'application/json, */*', 'X-Auth-Token':token}
-#     res = requests.get( url, headers = headers )
-#     # print(res.json())
-#     body = res.json()['stacks']
-#     for elem in body:
-#         url = url_base + "/heat-api/v1/%s/stacks/%s/%s/resources?type=OS::Nova::Server"%(project_id,elem['stack_name'],elem['id'])
-#         headers = {'Content-Type': 'application/json, */*', 'X-Auth-Token':token, "id": elem['id']}
-#         res = requests.get( url, headers = headers ).json()["resources"]
-#         for i in res:
-#             resource_uuid = i["physical_resource_id"]
-#             resource_list = get_resource_list(token,resource_uuid)
-        
-#     return body
-
-    
 
 def get_resource_size(token, server_uuid):
     body = get_resource_list(token,server_uuid)
@@ -156,6 +184,7 @@ def get_resource_size(token, server_uuid):
     except Exception as e:
         print(e)
         return None
+
 
 def get_mesuare_list(token, body):
 
@@ -188,13 +217,27 @@ def get_mesuare_list(token, body):
 
     return cpu, memory, disk
 
-def get_server_info(token,server_uuid):
-    headers = {'Content-Type': 'application/json', 'X-Auth-Token': token}
-    url = url_base + '/compute/v2.1/servers/%s'%server_uuid
-    res = requests.get(url=url, headers=headers)
-    return res.json()
+
+# def get_stack_resource_list(token, project_id):
+#     url = url_base + "/heat-api/v1/%s/stacks" %(project_id)
+#     headers = {'Content-Type': 'application/json, */*', 'X-Auth-Token':token}
+#     res = requests.get( url, headers = headers )
+#     # print(res.json())
+#     body = res.json()['stacks']
+#     for elem in body:
+#         url = url_base + "/heat-api/v1/%s/stacks/%s/%s/resources?type=OS::Nova::Server"%(project_id,elem['stack_name'],elem['id'])
+#         headers = {'Content-Type': 'application/json, */*', 'X-Auth-Token':token, "id": elem['id']}
+#         res = requests.get( url, headers = headers ).json()["resources"]
+#         for i in res:
+#             resource_uuid = i["physical_resource_id"]
+#             resource_list = get_resource_list(token,resource_uuid)
+        
+#     return body
 
 
+
+
+###  Flavor API 
 def get_flavor_id(token, server_uuid):
     flavor_id = get_server_info(token, server_uuid)['server']['flavor']['id']
     return flavor_id
@@ -212,11 +255,6 @@ def remove_flavor(token, flavor_id):
     res = requests.delete(url=url, headers=headers)
     return res
 
-# def get_flavor_info(token, flavorID):
-#     headers = {'Content-Type': 'application/json', 'X-Auth-Token': token}
-#     url = url_base + '/compute/v2.1/os-simple-tenant-usage/%s' % flavorID
-#     res = requests.get(url=url, headers=headers)
-#     return res.json()
 
 def create_flavor(token, flavor_name, vcpus, memory, storage):
     headers = {'Content-Type': 'application/json', 'X-Auth-Token': token}
@@ -231,6 +269,28 @@ def create_flavor(token, flavor_name, vcpus, memory, storage):
         }
     }
     res = requests.post(url, headers=headers, data=json.dumps(req))
+    return res.json()
+
+
+def get_flavor_list(token):
+    headers = {'Content-Type': 'application/json', 'X-Auth-Token': token}
+    url = url_base + '/compute/v2.1/flavors'
+    res = requests.get(url, headers=headers)
+    return res.json()
+
+# def get_flavor_info(token, flavorID):
+#     headers = {'Content-Type': 'application/json', 'X-Auth-Token': token}
+#     url = url_base + '/compute/v2.1/os-simple-tenant-usage/%s' % flavorID
+#     res = requests.get(url=url, headers=headers)
+#     return res.json()
+
+
+
+### Image API 
+def get_image_list(token):
+    headers = {'Content-Type': 'application/json', 'X-Auth-Token': token}
+    url = url_base + '/image/v2/images'
+    res = requests.get(url=url, headers=headers)
     return res.json()
 
 def createAlarm(token, uuid, cpu, memory, disk):
@@ -278,38 +338,6 @@ def createAlarm(token, uuid, cpu, memory, disk):
     u = str(s)
     print(u)
     return 
-
-def get_token_by_token(token,project_id):
-    data = \
-        {
-            "auth": {
-                "identity": {
-                    "methods": [
-                        "token"
-                    ],
-                    "token": {
-                        "id": token
-                    }
-                },
-                "scope": {
-                    "project": {
-                        "id": project_id
-                    }
-                }
-            }
-        }
-
-
-    # pixed header
-    headers = {'Content-Type': 'application/json', 'Accept': 'application/json', "X-Auth-Token":token}
-    # TODO get project id
-    res = requests.post(url_base + '/identity/v3/auth/tokens', headers=headers, data=json.dumps(data), verify=True)
-    try:
-        token = res.headers['X-Subject-Token']
-        return token
-    except Exception as e:
-        print(e)
-        return None
 
 
 if __name__ == '__main__':

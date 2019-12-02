@@ -28,33 +28,11 @@ class StackUpdate extends React.Component {
         // this.addCustomer = this.addCustomer.bind(this)
         this.handleClickOpen = this.handleClickOpen.bind(this)
         this.handleClose = this.handleClose.bind(this);
-        this.update = this.update.bind(this);
     }
     
-    
-    update = async () => {
-        const { data,token }  = this.props
-        let stackInfo={
-          token: token,
-          server_name: data.name,
-          rating: this.state.rating,
-          project_id : data.project_id
-        };
-        fetch('http://localhost:5000/stackUpdate',{
-          method: 'POST',
-          headers:{
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(stackInfo)
-          }).then((response)=> response.json())
-          .then((responseData)=>{
-            console.log(responseData)
-          });
-    }
 
     handleFormSubmit(e) {
         e.preventDefault()
-        this.update();
         this.props.callbackFromParent(this.state.rating);
         this.setState({
             rating: null,
@@ -78,35 +56,30 @@ class StackUpdate extends React.Component {
     
     handleClose() {
         this.setState({
-            file: null,
-            userName: '',
-            birthday: '',
-            gender: '',
-            job: '',
-            fileName: '',
+            rating: null,
             open: false
         })
     }
-    
-    
+
+
     render() {
         const { classes } = this.props;
         return (
             <div>
-            <Button variant="contained" color="primary" onClick={this.handleClickOpen}>
-                Stack Update
-            </Button>
-            <Dialog open={this.state.open} onClose={this.handleClose}>
-                <DialogTitle>Rating 조사</DialogTitle>
-                    <DialogContent>
-                        <TextField label="Rating" type="text" name="rating" value={this.state.rating} onChange={this.handleValueChange} /><br/>
-                    </DialogContent>
-                <DialogActions>
-                <Button variant="contained" color="primary" onClick={this.handleFormSubmit}>Update</Button>
-                <Button variant="outlined" color="primary" onClick={this.handleClose}>Close</Button>
-                </DialogActions>
-            </Dialog>
-        </div>
+                <Button variant="contained" color="primary" onClick={this.handleClickOpen}>
+                    Stack Update
+                </Button>
+                <Dialog open={this.state.open} onClose={this.handleClose}>
+                    <DialogTitle>Rating 조사</DialogTitle>
+                        <DialogContent>
+                            <TextField label="Rating" type="text" name="rating" value={this.state.rating} onChange={this.handleValueChange} /><br/>
+                        </DialogContent>
+                    <DialogActions>
+                    <Button variant="contained" color="primary" onClick={this.handleFormSubmit}>Update</Button>
+                    <Button variant="outlined" color="primary" onClick={this.handleClose}>Close</Button>
+                    </DialogActions>
+                </Dialog>
+            </div>
         )
     }
     

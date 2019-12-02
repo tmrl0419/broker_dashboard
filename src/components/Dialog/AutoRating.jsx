@@ -26,35 +26,15 @@ class AutoRating extends React.Component {
         }
         this.handleFormSubmit = this.handleFormSubmit.bind(this)
         this.handleValueChange = this.handleValueChange.bind(this)
-        // this.addCustomer = this.addCustomer.bind(this)
         this.handleClickOpen = this.handleClickOpen.bind(this)
         this.handleClose = this.handleClose.bind(this);
-        this.update = this.update.bind(this);
     }
     
-    
-    update = async () => {
-        const { data,token }  = this.props
-        let stackInfo={
-          token: token,
-          server_name: data.name,
-          rating: this.state.rating,
-          project_id : data.project_id
-        };
-        fetch('http://localhost:5000/stackUpdate',{
-          method: 'POST',
-          headers:{
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(stackInfo)
-          }).then((response)=> response.json())
-          .then((responseData)=>{
-            console.log(responseData)
-          });
-    }
 
     handleFormSubmit(e) {
         e.preventDefault()
+        console.log(this.state.interval*60)
+        this.props.callbackFromParent(this.state.interval*60);
         this.setState({
             open: false
         })
@@ -76,12 +56,6 @@ class AutoRating extends React.Component {
     
     handleClose() {
         this.setState({
-            file: null,
-            userName: '',
-            birthday: '',
-            gender: '',
-            job: '',
-            fileName: '',
             open: false
         })
     }
