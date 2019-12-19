@@ -83,7 +83,6 @@ def getVolumeInfo(project_id : str, server_id : str, x_auth_token : str) -> dict
     headers = {'X-Auth-Token': x_auth_token, 'Content-Type': 'application/json'}
     url = url_base+ "/compute/v2.1/servers/%s/os-volume_attachments" % (server_id)
     tmp = requests.get(url, headers = headers)
-
     lresult = tmp.json()
     vlist = lresult["volumeAttachments"]
     vid = vlist[0]["volumeId"]
@@ -94,7 +93,7 @@ def getVolumeInfo(project_id : str, server_id : str, x_auth_token : str) -> dict
 
     volumeRealName = vSearchResult["volume"]["name"]
     name_split = volumeRealName.split("-")
-
+    print(name_split)
     return { "id" : vid, "name" : name_split[1] }
 
 def flavorVolumeSize(project_id : str, flavor : str, x_auth_token) -> int :
@@ -149,10 +148,14 @@ def copyTemplate(project_id : str, server_name : str, server_id : str, x_auth_to
 
 
 def resizeTemplate(project_id : str, server_name : str, server_id : str, flavor : str, x_auth_token : str) -> dict :
+    print(project_id, server_name, server_id, flavor, x_auth_token)
     name_split = server_name.split("-")
+    print(name_split)
     stack = name_split[0]
     instance = name_split[1]
+    print(stack,instance)
     volumeInfo = getVolumeInfo(project_id, server_id, x_auth_token)
+    print("resize here0")
     stackID = searchStackID(project_id, stack, x_auth_token)
     print("resize here1")
     snapshotID = createSnapshotVolume(project_id, volumeInfo["id"], x_auth_token)
@@ -189,9 +192,9 @@ def resizeTemplate(project_id : str, server_name : str, server_id : str, flavor 
 # resizeTemplate(PID, "selab_test-hello-z3sza4r3he3p", "235ca8bb-4db1-4c44-84f9-0732e14d6513", "m1.medium", X_Auth_Token)
 
 
-def createStack(tenant_id : str, server_name : str, stack_name : str, flavor : str, image : str, x_auth_token : str) :
-    print(tenant_id, flavor, x_auth_token)
-    size = flavorVolumeSize(tenant_id, flavor ,x_auth_token)
+def createStack(project_id : str, server_name : str, stack_name : str, flavor : str, image : str, x_auth_token : str) :
+    print(project_id, flavor, x_auth_token)
+    size = flavorVolumeSize(project_id, flavor ,x_auth_token)
     print(size)
     template = {
         "heat_template_version" : "2018-08-31",
@@ -210,7 +213,6 @@ def createStack(tenant_id : str, server_name : str, stack_name : str, flavor : s
                     "size" : size,
                     "volume_type" : "lvmdriver-1"
                 },
-                
             },
             server_name + "_attachment" : {
                 "type" : "OS::Cinder::VolumeAttachment",
@@ -224,7 +226,7 @@ def createStack(tenant_id : str, server_name : str, stack_name : str, flavor : s
     
     param = { "template" : template, "stack_name" : stack_name }
     headers = { 'X-Auth-Token': x_auth_token, 'Content-Type': 'application/json' }
-    url = url_base+"/heat-api/v1/%s/stacks" % (tenant_id)
+    url = url_base+"/heat-api/v1/%s/stacks" % (project_id)
     tmp = requests.post(url, headers=headers, data=json.dumps(param))
     print(tmp.json())
 

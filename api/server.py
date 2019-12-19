@@ -104,6 +104,11 @@ def instnaceInfo():
             element['project_id'] = oa.get_server_info(token,server_uuid[i])['server']['tenant_id']
             data.append(element)
         except Exception as e:
+            element = {}
+            element['name'] = server_names[i]
+            element['flavor_cpu'] , element['flavor_memory'] ,element['flavor_storage'] = oa.get_resource_size(token,server_uuid[i])
+            element['project_id'] = oa.get_server_info(token,server_uuid[i])['server']['tenant_id']
+            data.append(element)
             print(e)
             pass
     jsonResult = {
@@ -159,10 +164,8 @@ def stackUpdate():
                         flavor_name = server_name + str(datetime.datetime.now())
                         try:
                             oa.create_flavor(token, flavor_name, int(cpu), int(memory), int(storage))
-                            print("arrive here")
                             try:
                                 print( oh.resizeTemplate(project_id, server_name, server_id, flavor_name, token) )
-                                print("arrive here10")
                             except Exception as e:
                                 print(e)
                                 pass       
@@ -175,6 +178,8 @@ def stackUpdate():
                     else:
                         if(rating <= 20):
                             print("Need to copy and move")
+                            res={'result': 'alternative'}
+                            return res
                         else: 
                             print("Don't need change")
                     jsonResult = {
@@ -239,8 +244,6 @@ def createInfo():
     images = oa.get_image_list(token)
     flavors = oa.get_flavor_list(token)
     
-    # image_list = { k: v for k1, k2, v1, v2 in data from k, v in }
-    # image_list = {  "key": elem['id'], "value": elem['name']  for elem in images['images'] }
     image_list = { elem['id']: elem['name'] for elem in images['images'] }
     flavor_list = { elem['id']: elem['name'] for elem in flavors['flavors'] }
 

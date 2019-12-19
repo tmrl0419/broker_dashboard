@@ -22,6 +22,8 @@ import CardFooter from "components/Card/CardFooter";
 import AutoRating from "components/Dialog/AutoRating";
 import StackUpdate from "components/Dialog/StackUpdate";
 import Threshold from "components/Dialog/Threshold";
+// import { LoopCircleLoading } from 'react-loadingg';
+import ReactLoading from 'react-loading';
 
 export default class Instance extends React.Component{
 
@@ -34,7 +36,8 @@ export default class Instance extends React.Component{
         disk : 0,
         name : 0,
         Auto: false,
-        Interval: null
+        Interval: null,
+        processing: false
       };
       this.autoMode = this.autoMode.bind(this);
       this.update = this.update.bind(this);
@@ -60,6 +63,12 @@ export default class Instance extends React.Component{
         }).then((response)=> response.json())
         .then((responseData)=>{
           console.log(responseData)
+          if(responseData.result =='alternative'){
+            console.log("Arrived");
+            this.setState({
+              processing:true
+            });
+          }
         });
     }
 
@@ -98,6 +107,7 @@ export default class Instance extends React.Component{
     }
 
     render(){
+
       const classes = this.props.classes;
       const data  = this.props.data;
 
@@ -107,7 +117,8 @@ export default class Instance extends React.Component{
             <CardHeader color="primary" stats icon>
               <p className={classes.cardTitle} >{data.name}</p>
               { this.state.Auto ? <label className={classes.cardTitle} style={{color:'red'}} >Auto mode</label> : <label className={classes.cardTitle} style={{color:'blue'}}>Non- Auto mode</label>}
-              
+              {/* Add feature that clear loading bar, after finishing update or alternate*/}
+              {this.state.processing || data.cpu==null || data.memory==null || data.disk==null? <ReactLoading type="spinningBubbles" color="black" height={200} width={100}/>:null}
             </CardHeader>
             <GridItem xs={12} sm={6} md={3}>
               <Card >  

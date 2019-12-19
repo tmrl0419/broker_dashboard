@@ -30,7 +30,6 @@ class StackUpdate extends React.Component {
         this.handleClose = this.handleClose.bind(this);
     }
     
-
     handleFormSubmit(e) {
         e.preventDefault()
         this.props.callbackFromParent(this.state.rating);
