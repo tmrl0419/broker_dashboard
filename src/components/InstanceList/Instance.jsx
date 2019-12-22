@@ -30,17 +30,18 @@ export default class Instance extends React.Component{
     constructor(props){
       super(props);
       this.state = {
-        rating : 0,
-        cpu : 0,
-        memory : 0,
-        disk : 0,
-        name : 0,
+        rating : 'not evaluated yet',
+        cpu : null,
+        memory : null,
+        disk : null,
+        name : null,
         Auto: false,
         Interval: null,
         processing: false
       };
       this.autoMode = this.autoMode.bind(this);
       this.update = this.update.bind(this);
+      this.setTimer = this.setTimer.bind(this);
       // this.autoRatingCallback = this.autoRatingCallback.bind(this);
       // this.stackUpdateCallback = this.stackUpdateCallback.bind(this);
       var timer;
@@ -72,16 +73,37 @@ export default class Instance extends React.Component{
         });
     }
 
+    setTimer = async ( threshold ) => {
+      console.log(threshold)
+      const { data,token }  = this.props
+      let stackInfo={
+        token: token,
+        server_name: data.name,
+        rating: this.state.rating,
+        project_id : data.project_id,
+        cpu: threshold.cpu,
+        memory: threshold.memory,
+        disk: threshold.disk
+      };
+      console.log(stackInfo)
+      fetch('http://localhost:5000/setAlarm',{
+        method: 'POST',
+        headers:{
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(stackInfo)
+        }).then((response)=> response.json())
+        .then((responseData)=>{
+          console.log(responseData);
+        });
+    }
+
     autoMode = (time) => { 
       var self = this;
       this.timer = setInterval( function(){
-        console.log(this.state);
-        console.log("updated!!");
-        console.log(time);
         self.update();
       }, time*1000 );
     }
-
 
 
     stackUpdateCallback = (childRating) =>{
@@ -104,6 +126,16 @@ export default class Instance extends React.Component{
       }, () =>{
         this.autoMode(this.state.Interval)
       });
+    }
+
+    thresholdCallback = (data) =>{
+      console.log(data);
+      this.setTimer(data);
+      this.setState({
+        cpu: data.cpu,
+        memory: data.memory,
+        disk: data.disk
+      })
     }
 
     render(){
@@ -131,7 +163,7 @@ export default class Instance extends React.Component{
                     {data.cpu}<small>%</small>
                   </h3>
                   <p className={classes.cardCategory}>전체 : {data.flavor_cpu}개</p>
-                  <p className={classes.cardCategory}>Threshold : {this.state.cpu}%</p>
+                  {this.state.cpu? <p style={{color:'red'}} className={classes.cardCategory}>Threshold : {this.state.cpu}%</p>: null}
                 </CardHeader>
                 <CardFooter stats>
                   <div className={classes.stats}>
@@ -154,7 +186,7 @@ export default class Instance extends React.Component{
                   <p className={classes.cardCategory}>Memory</p>
                   <h3 className={classes.cardTitle}>{data.memory}<small>%</small></h3>
                   <p className={classes.cardCategory}>전체 : {data.flavor_memory}GB</p>
-                  <p className={classes.cardCategory}>Threshold : {this.state.memory}%</p>
+                  {this.state.memory? <p style={{color:'red'}} className={classes.cardCategory}>Threshold : {this.state.memory}%</p>: null}
                 </CardHeader>
                 <CardFooter stats>
                   <div className={classes.stats}>
@@ -173,7 +205,7 @@ export default class Instance extends React.Component{
                   <p className={classes.cardCategory}>Storage</p>
                   <h3 className={classes.cardTitle}>{data.disk}<small>%</small></h3>
                   <p className={classes.cardCategory}>전체 : {data.flavor_storage}GB</p>
-                  <p className={classes.cardCategory}>Threshold : {this.state.disk}%</p>
+                  {this.state.disk ? <p style={{color:'red'}}  className={classes.cardCategory}>Threshold : {this.state.disk}%</p> : null}
                 </CardHeader>
                 <CardFooter stats>
                   <div className={classes.stats}>
@@ -203,7 +235,7 @@ export default class Instance extends React.Component{
             <div>
               <StackUpdate data={data} token={this.props.token} callbackFromParent={this.stackUpdateCallback} />
               <AutoRating callbackFromParent={this.autoRatingCallback}/>
-              <Threshold/>
+              <Threshold callbackFromParent={this.thresholdCallback}/>
             </div>
             
           </Card>

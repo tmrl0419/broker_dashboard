@@ -140,6 +140,7 @@ def copyTemplate(project_id : str, server_name : str, server_id : str, x_auth_to
     }
 
     saveTemplate(project_id, "TemplateContainer", server_name+".yaml", yaml.dump(HOT), x_auth_token)
+    print(HOT)
     updateStack(project_id, stack, stackID, HOT, x_auth_token)
     time.sleep(120)
     deleteSnapshotVolume(project_id, snapshotID, x_auth_token)

@@ -293,42 +293,83 @@ def get_image_list(token):
     res = requests.get(url=url, headers=headers)
     return res.json()
 
-def createAlarm(token, uuid, cpu, memory, disk):
+
+def testAlarm(token, server_uuid, cpu, memory, disk):
+    cpu = int(cpu)/100.0
+
     data = {
-        'alarm_actions': ['http://localhost:5000/stackUpdate?uuid={uuid}'],
-        # 'ok_actions': ['https://localhost:8000/ok'],
-        # 'insufficient_data_actions': ['https://localhost:8000/nodata'],
-        'name': 'cpu_hi',
+        'alarm_actions': ['http://localhost:3000/alarm'],
+         'ok_actions': ['https://localhost:3000/ok'],
+        'name': 'disk_hi2',
+        'gnocchi_resources_threshold_rule': {
+            'evaluation_periods': 1,
+            'metric': 'disk.usage',
+            'resource_id': server_uuid,
+            'aggregation_method': 'mean',
+            'granularity': '300',
+            'threshold': cpu,
+            'comparison_operator': 'gt',
+            'resource_type': 'instance'
+        },
+        'insufficient_data_actions': ['https://localhost:3000/nodata'],
+        'type': 'gnocchi_resources_threshold',
+        'description': 'CPU High Average'
+    }
+
+    headers = {
+        'X-Auth-Token': token,
+        "Content-Type": "application/json"}
+    res = requests.post(url_base+":8042/v2/alarms", headers=headers, data=json.dumps(data))
+
+    # res = requests.post(URL, headers=headers, data = data)
+    s = res.content
+    u = str(s)
+    print(u)
+
+def createAlarm(token, server_uuid, cpu, memory, disk):
+    resource_cpu , resource_memory, resource_disk = get_resource_size(token, server_uuid)
+    print(resource_cpu , resource_memory, resource_disk )
+    memory =  (int(memory)*resource_memory*1024)/100.0
+    disk = (int(disk)*resource_disk*1024)/100.0
+    alarmName = server_uuid+"Alarm"
+    data = {
+        'alarm_actions': ['http://localhost:3000/stackUpdate?uuid={server_uuid}'],
+        'ok_actions': ['https://localhost:3000/ok'],
+        'insufficient_data_actions': ['https://localhost:3000/nodata'],
+        'name': alarmName,
         'type': 'composite',
         'composite_rule': {
             "or": [
                 {
-                    "threshold": cpu if cpu!= None else 1,
+                    "threshold": cpu if cpu!= None else 10000,
                     "metric": "cpu_util",
                     "type": "gnocchi_resources_threshold",
-                    "resource_id": uuid,                    
+                    "resource_id": server_uuid,                    
                     "resource_type": "instance",
-                     "aggregation_method": "last"
+                    "aggregation_method": "last",
+                    "granularity": "300",
+                    'comparison_operator': 'gt'
                 },
                 {
-                    "threshold": memory if memory!= None else 1,
-                    "metric": "cpu_util",
+                    "threshold": memory if memory!= None else 10000,
+                    "metric": "memory.usage",
                     "type": "gnocchi_resources_threshold",
-                    "resource_id": uuid,
+                    "resource_id": server_uuid,
                     "resource_type": "instance",
-                     "aggregation_method": "last"
+                    "aggregation_method": "last",
+                    "granularity": "300"
                 },
                 {
-                    "threshold": disk if disk!= None else 1,
-                    "metric": "cpu_util",
+                    "threshold": disk if disk!= None else 10000,
+                    "metric": "disk.usage",
                     "type": "gnocchi_resources_threshold",
-                    "resource_id": uuid,
+                    "resource_id": server_uuid,
                     "resource_type": "instance",
-                     "aggregation_method": "last"
+                    "aggregation_method": "last",
+                    "granularity": "300",
                 }
             ]
         }
-         
     }
     headers = {
         'X-Auth-Token': token,

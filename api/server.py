@@ -13,7 +13,8 @@ cors = CORS(app, resources={
   r"/*": {"origin": "*"},
   r"/stackUpdate/*": {"origin": "*"},
   r"/login/*": {"origin": "*"},
-  r"/instanceInfo/*": {"origin": "*"}
+  r"/instanceInfo/*": {"origin": "*"},
+  r"/setAlarm/*": {"origin": "*"}
 })
 
 sess = tf.Session()
@@ -143,9 +144,9 @@ def stackUpdate():
             cpu = round(temp[0],0)
             memory  = round(temp[1]*100,0)
             storage = round(temp[2]*100, 0)
-            cpu = 30
-            memory = 80
-            storage = 30
+            # cpu = 30
+            # memory = 80
+            # storage = 30
             # data store ( Object file ) Swift 
             print(cpu,memory,storage)
             with graph.as_default():
@@ -178,6 +179,7 @@ def stackUpdate():
                     else:
                         if(rating <= 20):
                             print("Need to copy and move")
+                            oh.copyTemplate(project_id, server_name, server_id, token)
                             res={'result': 'alternative'}
                             return res
                         else: 
@@ -205,12 +207,16 @@ def setAlarm():
     """Instance Inforamtion"""
     print("/setAlarm  <- ")
     body = request.get_json()
+    print(body)
     token = body['token']
-    instance_uuid = body['instance_uuid']
     alarmCPU = body['cpu']
     alarmMemory = body['memory']
     alarmDisk = body['disk']
-    oa.createAlarm(token,instance_uuid,alarmCPU,alarmMemory,alarmDisk)
+    server_name = body['server_name']
+    server_id = oa.get_server_id(token, server_name)
+    print(alarmCPU, alarmMemory, alarmDisk)
+    oa.testAlarm(token,server_id,alarmCPU,alarmMemory,alarmDisk)
+    oa.createAlarm(token,server_id,alarmCPU,alarmMemory,alarmDisk)
     res = { "result" : True}
     print("/setAlarm  -> ")
     return res
@@ -255,6 +261,22 @@ def createInfo():
     res = make_response(res)
     print("/createInfo  -> ")
     return res
+
+@app.route("/uploadImage", methods=['POST'])
+def uploadImage():
+    print("/uploadImage  <- ")
+    req = request.get_json()
+    token = req['token']
+    File = req['file']
+    print("File: ", File)
+    res = {
+        'result': 'True'
+    }
+
+    res = make_response(res)
+    print("/uploadImage  -> ")
+    return res
+
 
 
 if __name__ == '__main__':

@@ -19,17 +19,13 @@ class Threshold extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            file: null,
-            userName: '',
-            birthday: '',
-            gender: '',
-            job: '',
-            fileName: '',
+            cpu: null,
+            memory: null,
+            disk: null,
             open: false
         }
         this.handleFormSubmit = this.handleFormSubmit.bind(this)
         this.handleValueChange = this.handleValueChange.bind(this)
-        this.addCustomer = this.addCustomer.bind(this)
         this.handleClickOpen = this.handleClickOpen.bind(this)
         this.handleClose = this.handleClose.bind(this);
     }
@@ -37,19 +33,8 @@ class Threshold extends React.Component {
     
     handleFormSubmit(e) {
         e.preventDefault()
-        this.addCustomer()
-            .then((response) => {
-                console.log(response.data);
-                this.props.stateRefresh();
-            })
-        
+        this.props.callbackFromParent(this.state);
         this.setState({
-            file: null,
-            userName: '',
-            birthday: '',
-            gender: '',
-            job: '',
-            fileName: '',
             open: false
         })
     }
@@ -61,24 +46,7 @@ class Threshold extends React.Component {
         this.setState(nextState);
     }
     
-    
-    addCustomer(){
-        const url = '/api/customers';
-        const formData = new FormData();
-        formData.append('image', this.state.file)
-        formData.append('name', this.state.userName)
-        formData.append('birthday', this.state.birthday)
-        formData.append('gender', this.state.gender)
-        formData.append('job', this.state.job)
-        const config = {
-            headers: {
-            'content-type': 'multipart/form-data'  
-            }
-        }
-        return 0
-    }
-    
-    
+
     handleClickOpen() {
         this.setState({
             open: true
@@ -88,12 +56,6 @@ class Threshold extends React.Component {
     
     handleClose() {
         this.setState({
-            file: null,
-            userName: '',
-            birthday: '',
-            gender: '',
-            job: '',
-            fileName: '',
             open: false
         })
     }
@@ -109,9 +71,9 @@ class Threshold extends React.Component {
             <Dialog open={this.state.open} onClose={this.handleClose}>
                 <DialogTitle>Aodh threshold</DialogTitle>
                     <DialogContent>
-                        <TextField label="CPU Threshold (%)" type="text" name="birthday" value={this.state.birthday} onChange={this.handleValueChange} /><br/>
-                        <TextField label="Memory Threshold (%)" type="text" name="gender" value={this.state.gender} onChange={this.handleValueChange} /><br/>
-                        <TextField label="Disk Threshold (%)" type="text" name="job" value={this.state.job} onChange={this.handleValueChange} /><br/>
+                        <TextField label="CPU Threshold (%)" type="text" name="cpu" value={this.state.birthday} onChange={this.handleValueChange} /><br/>
+                        <TextField label="Memory Threshold (%)" type="text" name="memory" value={this.state.gender} onChange={this.handleValueChange} /><br/>
+                        <TextField label="Disk Threshold (%)" type="text" name="disk" value={this.state.job} onChange={this.handleValueChange} /><br/>
                     </DialogContent>
                 <DialogActions>
                 <Button variant="contained" color="primary" onClick={this.handleFormSubmit}>OK</Button>
