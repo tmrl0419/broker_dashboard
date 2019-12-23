@@ -294,20 +294,114 @@ def get_image_list(token):
     return res.json()
 
 
-def testAlarm(token, server_uuid, cpu, memory, disk):
-    cpu = int(cpu)/100.0
+# def testAlarm(token, server_uuid, cpu, memory, disk):
+#     cpu = int(cpu)/100.0
+
+#     data = {
+#         'alarm_actions': ['http://localhost:3000/alarm'],
+#          'ok_actions': ['https://localhost:3000/ok'],
+#         'name': 'disk_hi2',
+#         'gnocchi_resources_threshold_rule': {
+#             'evaluation_periods': 1,
+#             'metric': 'disk.usage',
+#             'resource_id': server_uuid,
+#             'aggregation_method': 'mean',
+#             'granularity': '300',
+#             'threshold': cpu,
+#             'comparison_operator': 'gt',
+#             'resource_type': 'instance'
+#         },
+#         'insufficient_data_actions': ['https://localhost:3000/nodata'],
+#         'type': 'gnocchi_resources_threshold',
+#         'description': 'CPU High Average'
+#     }
+
+#     headers = {
+#         'X-Auth-Token': token,
+#         "Content-Type": "application/json"}
+#     res = requests.post(url_base+":8042/v2/alarms", headers=headers, data=json.dumps(data))
+
+#     # res = requests.post(URL, headers=headers, data = data)
+#     s = res.content
+#     u = str(s)
+#     print(u)
+
+def cpuAlarm(token, server_uuid, cpu):
+    data = {
+        'alarm_actions': ['http://localhost:3000/alarm'],
+         'ok_actions': ['https://localhost:3000/ok'],
+        'name': 'cpu_hi',
+        'gnocchi_resources_threshold_rule': {
+            'evaluation_periods': 1,
+            'metric': 'cpu_util',
+            'resource_id': server_uuid,
+            'aggregation_method': 'mean',
+            'granularity': '300',
+            'threshold': cpu,
+            'comparison_operator': 'gt',
+            'resource_type': 'instance'
+        },
+        'insufficient_data_actions': ['https://localhost:3000/nodata'],
+        'type': 'gnocchi_resources_threshold',
+        'description': 'CPU High Average'
+    }
+
+    headers = {
+        'X-Auth-Token': token,
+        "Content-Type": "application/json"}
+    res = requests.post(url_base+":8042/v2/alarms", headers=headers, data=json.dumps(data))
+
+    # res = requests.post(URL, headers=headers, data = data)
+    s = res.content
+    u = str(s)
+    print(u)
+
+def memoryAlarm(token, server_uuid, memory):
+    resource_cpu , resource_memory, resource_disk = get_resource_size(token, server_uuid)
+    memory =  (int(memory)*resource_memory*1024)/100.0
 
     data = {
         'alarm_actions': ['http://localhost:3000/alarm'],
          'ok_actions': ['https://localhost:3000/ok'],
-        'name': 'disk_hi2',
+        'name': 'memory_hi',
+        'gnocchi_resources_threshold_rule': {
+            'evaluation_periods': 1,
+            'metric': 'memory.usage',
+            'resource_id': server_uuid,
+            'aggregation_method': 'mean',
+            'granularity': '300',
+            'threshold': memory,
+            'comparison_operator': 'gt',
+            'resource_type': 'instance'
+        },
+        'insufficient_data_actions': ['https://localhost:3000/nodata'],
+        'type': 'gnocchi_resources_threshold',
+        'description': 'CPU High Average'
+    }
+
+    headers = {
+        'X-Auth-Token': token,
+        "Content-Type": "application/json"}
+    res = requests.post(url_base+":8042/v2/alarms", headers=headers, data=json.dumps(data))
+
+    # res = requests.post(URL, headers=headers, data = data)
+    s = res.content
+    u = str(s)
+    print(u)
+
+
+def diskAlarm(token, server_uuid, disk):
+    data = {
+        'alarm_actions': ['http://localhost:3000/alarm'],
+         'ok_actions': ['https://localhost:3000/ok'],
+        'name': 'disk_hi',
         'gnocchi_resources_threshold_rule': {
             'evaluation_periods': 1,
             'metric': 'disk.usage',
             'resource_id': server_uuid,
             'aggregation_method': 'mean',
             'granularity': '300',
-            'threshold': cpu,
+            'threshold': disk,
             'comparison_operator': 'gt',
             'resource_type': 'instance'
         },

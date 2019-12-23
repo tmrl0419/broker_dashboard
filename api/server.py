@@ -9,13 +9,16 @@ import datetime
 from tensorflow.python.keras.backend import set_session
 
 app = Flask(__name__)
-cors = CORS(app, resources={
-  r"/*": {"origin": "*"},
-  r"/stackUpdate/*": {"origin": "*"},
-  r"/login/*": {"origin": "*"},
-  r"/instanceInfo/*": {"origin": "*"},
-  r"/setAlarm/*": {"origin": "*"}
-})
+cors = CORS(
+            app, 
+            resources={
+                r"/*": {"origin": "*"},
+                r"/stackUpdate/*": {"origin": "*"},
+                r"/login/*": {"origin": "*"},
+                r"/instanceInfo/*": {"origin": "*"},
+                # r"/setAlarm/*": {"origin": "*"}
+            }
+        )
 
 sess = tf.Session()
 graph = tf.get_default_graph()
@@ -202,7 +205,6 @@ def stackUpdate():
             return {'reslut': False}
 
 
-@app.route("/setAlarm", methods=['POST'])
 def setAlarm():
     """Instance Inforamtion"""
     print("/setAlarm  <- ")
@@ -215,8 +217,18 @@ def setAlarm():
     server_name = body['server_name']
     server_id = oa.get_server_id(token, server_name)
     print(alarmCPU, alarmMemory, alarmDisk)
-    oa.testAlarm(token,server_id,alarmCPU,alarmMemory,alarmDisk)
-    oa.createAlarm(token,server_id,alarmCPU,alarmMemory,alarmDisk)
+    resource_cpu , resource_memory, resource_disk = get_resource_size(token, server_uuid)
+    # null로 보냈으면 cpu, 0으로 보냈으면 != 0
+    if(alarmCPU):
+        oa.cpuAlarm(token,server_id,alarmCPU)
+    if(alarmMemory):
+        alarmMemory =  (int(alarmMemory)*resource_memory*1024)/100.0
+        oa.memoryAlarm(token,server_id,alarmCPU)
+    if(alarmDisk):
+        alarmDisk =  (int(alarmDisk)*resource_disk*1024)/100.0
+        oa.diskAlarm(token,server_id,alarmCPU)
+    #composite rule alarm
+    #oa.createAlarm(token,server_id,alarmCPU,alarmMemory,alarmDisk)
     res = { "result" : True}
     print("/setAlarm  -> ")
     return res
