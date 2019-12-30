@@ -1,6 +1,7 @@
 import requests
 import json
 import datetime
+import src.heat as oh
 
 url_base = "http://localhost"
 
@@ -294,42 +295,11 @@ def get_image_list(token):
     return res.json()
 
 
-# def testAlarm(token, server_uuid, cpu, memory, disk):
-#     cpu = int(cpu)/100.0
-
-#     data = {
-#         'alarm_actions': ['http://localhost:3000/alarm'],
-#          'ok_actions': ['https://localhost:3000/ok'],
-#         'name': 'disk_hi2',
-#         'gnocchi_resources_threshold_rule': {
-#             'evaluation_periods': 1,
-#             'metric': 'disk.usage',
-#             'resource_id': server_uuid,
-#             'aggregation_method': 'mean',
-#             'granularity': '300',
-#             'threshold': cpu,
-#             'comparison_operator': 'gt',
-#             'resource_type': 'instance'
-#         },
-#         'insufficient_data_actions': ['https://localhost:3000/nodata'],
-#         'type': 'gnocchi_resources_threshold',
-#         'description': 'CPU High Average'
-#     }
-
-#     headers = {
-#         'X-Auth-Token': token,
-#         "Content-Type": "application/json"}
-#     res = requests.post(url_base+":8042/v2/alarms", headers=headers, data=json.dumps(data))
-
-#     # res = requests.post(URL, headers=headers, data = data)
-#     s = res.content
-#     u = str(s)
-#     print(u)
-
 def cpuAlarm(token, server_uuid, cpu):
+    alter_url = 'http://localhost:5000/alarmAlter?uuid='+server_uuid
     data = {
-        'alarm_actions': ['http://localhost:3000/alarm'],
-         'ok_actions': ['https://localhost:3000/ok'],
+        'alarm_actions': [alter_url],
+        'ok_actions': ['https://localhost:5000/ok'],
         'name': 'cpu_hi',
         'gnocchi_resources_threshold_rule': {
             'evaluation_periods': 1,
@@ -341,7 +311,7 @@ def cpuAlarm(token, server_uuid, cpu):
             'comparison_operator': 'gt',
             'resource_type': 'instance'
         },
-        'insufficient_data_actions': ['https://localhost:3000/nodata'],
+        'insufficient_data_actions': ['https://localhost:5000/nodata'],
         'type': 'gnocchi_resources_threshold',
         'description': 'CPU High Average'
     }
@@ -357,12 +327,11 @@ def cpuAlarm(token, server_uuid, cpu):
     print(u)
 
 def memoryAlarm(token, server_uuid, memory):
-    resource_cpu , resource_memory, resource_disk = get_resource_size(token, server_uuid)
-    memory =  (int(memory)*resource_memory*1024)/100.0
+    alter_url = 'http://localhost:5000/alarmAlter'#?uuid='+server_uuid'
 
     data = {
-        'alarm_actions': ['http://localhost:3000/alarm'],
-         'ok_actions': ['https://localhost:3000/ok'],
+        'alarm_actions': [alter_url],
+         'ok_actions': ['https://localhost:5000/ok'],
         'name': 'memory_hi',
         'gnocchi_resources_threshold_rule': {
             'evaluation_periods': 1,
@@ -374,7 +343,7 @@ def memoryAlarm(token, server_uuid, memory):
             'comparison_operator': 'gt',
             'resource_type': 'instance'
         },
-        'insufficient_data_actions': ['https://localhost:3000/nodata'],
+        'insufficient_data_actions': ['https://localhost:5000/nodata'],
         'type': 'gnocchi_resources_threshold',
         'description': 'CPU High Average'
     }
@@ -391,9 +360,10 @@ def memoryAlarm(token, server_uuid, memory):
 
 
 def diskAlarm(token, server_uuid, disk):
+    alter_url = 'http://localhost:5000/alarmAlter?uuid='+server_uuid
     data = {
-        'alarm_actions': ['http://localhost:3000/alarm'],
-         'ok_actions': ['https://localhost:3000/ok'],
+        'alarm_actions': [alter_url],
+         'ok_actions': ['https://localhost:5000/ok'],
         'name': 'disk_hi',
         'gnocchi_resources_threshold_rule': {
             'evaluation_periods': 1,
@@ -405,7 +375,7 @@ def diskAlarm(token, server_uuid, disk):
             'comparison_operator': 'gt',
             'resource_type': 'instance'
         },
-        'insufficient_data_actions': ['https://localhost:3000/nodata'],
+        'insufficient_data_actions': ['https://localhost:5000/nodata'],
         'type': 'gnocchi_resources_threshold',
         'description': 'CPU High Average'
     }
@@ -420,6 +390,8 @@ def diskAlarm(token, server_uuid, disk):
     u = str(s)
     print(u)
 
+
+### COMPOSIT ALARM DOESN'T WORK, NEED TO FIX IT
 def createAlarm(token, server_uuid, cpu, memory, disk):
     resource_cpu , resource_memory, resource_disk = get_resource_size(token, server_uuid)
     print(resource_cpu , resource_memory, resource_disk )
@@ -427,9 +399,9 @@ def createAlarm(token, server_uuid, cpu, memory, disk):
     disk = (int(disk)*resource_disk*1024)/100.0
     alarmName = server_uuid+"Alarm"
     data = {
-        'alarm_actions': ['http://localhost:3000/stackUpdate?uuid={server_uuid}'],
-        'ok_actions': ['https://localhost:3000/ok'],
-        'insufficient_data_actions': ['https://localhost:3000/nodata'],
+        'alarm_actions': ['http://localhost:5000/alarmAlter?uuid={server_uuid}'],
+        'ok_actions': ['https://localhost:5000/ok'],
+        'insufficient_data_actions': ['https://localhost:5000/nodata'],
         'name': alarmName,
         'type': 'composite',
         'composite_rule': {
@@ -474,9 +446,60 @@ def createAlarm(token, server_uuid, cpu, memory, disk):
     print(u)
     return 
 
+def stackUpdate(token, project_id, server_id, server_name, pred_cpu, pred_memory, pred_storage, rating):
+    if( pred_cpu != 1 or pred_memory != 1  or pred_storage != 1 ):
+        print("Need to Change")
+        cpu, memory, storage = get_resource_size(token,server_id)
+        cpu *= pred_cpu.round()
+        memory *= pred_memory.round(1)
+        storage *= pred_storage
+        memory = memory.round(1)*1024
+        storage = storage.round(1)
+        # flavor_prevID = get_flavor_id(token,server_id)
+        flavor_name = server_name + str(datetime.datetime.now())
+        try:
+            create_flavor(token, flavor_name, int(cpu), int(memory), int(storage))
+            try:
+                print( oh.resizeTemplate(project_id, server_name, server_id, flavor_name, token) )
+            except Exception as e:
+                print(e)
+                pass       
+            # flavor remove
+            # oa.remove_flavor(token, flavor_prevID)
+        except Exception as e:
+            print(e)
+            pass
+        # resize here
+    else:
+        if(rating <= 20):
+            print("Need to copy and move")
+            oh.copyTemplate(project_id, server_name, server_id, token)
+            res={'result': 'alternative'}
+            return res
+        else: 
+            print("Don't need change")
+    jsonResult = {
+        'pred_cpu': pred_cpu,
+        'pred_memory': pred_memory,
+        'pred_disk': pred_storage
+    }
+    resJson = json.dumps(str(jsonResult))
+    print("/stackUpdate  -> ")
+    print(resJson)
+    res = {'result': True}
+    return res
+
+def get_server_id_by_alarm(alarm_id, token):
+    url = url_base+":8042/v2/alarms/"+alarm_id
+    headers = {'Content-Type': 'application/json', 'X-Auth-Token': token}
+    res = requests.get(url, headers=headers)
+    body = res.json()
+    resource_id = body['gnocchi_resources_threshold_rule']['resource_id']
+    return resource_id
 
 if __name__ == '__main__':
-    flavor_id = get_flavor_id('gAAAAABdqLq6saLrqjBVA4p_e2qPTavL16-1Mqv7AP-kYb4b_NP0i1pFkrieZxMbYUrChAy-745b5FYHMl2KBUljb7znwU4DiEej7sKrxcHNFXo5RC2tPRBWRXP2PxjxWi_P9zTd7MvITx2dyZVUkBqOcOl2ykUrZPW6CVR3G55peqFeT3y5zCg', 'e6a04013-38aa-4ba6-a30f-88eb20d976ea')
+    #flavor_id = get_flavor_id('gAAAAABdqLq6saLrqjBVA4p_e2qPTavL16-1Mqv7AP-kYb4b_NP0i1pFkrieZxMbYUrChAy-745b5FYHMl2KBUljb7znwU4DiEej7sKrxcHNFXo5RC2tPRBWRXP2PxjxWi_P9zTd7MvITx2dyZVUkBqOcOl2ykUrZPW6CVR3G55peqFeT3y5zCg', 'e6a04013-38aa-4ba6-a30f-88eb20d976ea')
+    get_server_id_by_alarm('412fa434-5e59-496d-84a7-f5d59127bd46')
     # print(flavor_id)
     # print(get_flavor_name('gAAAABdqLq6saLrqjBVA4p_e2qPTavL16-1Mqv7AP-kYb4b_NP0i1pFkrieZxMbYUrChAy-745b5FYHMl2KBUljb7znwU4DiEej7sKrxcHNFXo5RC2tPRBWRXP2PxjxWi_P9zTd7MvITx2dyZVUkBqOcOl2ykUrZPW6CVR3G55peqFeT3y5zCg', flavor_id))
     # flavor = get_server_info('gAAAAABdpRhwm8DR6Yd4clbmRXquEsLhJ_sD53walnGxgVra4G7BnapscMRdvWe8R3nguVxOmL3lz1GIEKEL1bl_TVeGKoSj9Q2796tLu5QwJxiF442T0mkbEeYB9ncpXTWtAXML5Gonl_zXuysfHPA0xhfy3Cs904ahIPuz2Gr3yJKhiW-DGqQ', '7e07034a-caf0-421c-a0af-333936e6a15c')['server']['flavor']

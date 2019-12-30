@@ -85,7 +85,6 @@ export default class Instance extends React.Component{
         memory: threshold.memory,
         disk: threshold.disk
       };
-      console.log(stackInfo)
       fetch('http://localhost:5000/setAlarm',{
         method: 'POST',
         headers:{

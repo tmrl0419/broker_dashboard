@@ -31,7 +31,7 @@ import UpdateImage from "components/Dialog/UpdateImage";
 import axios from 'axios';
 
 import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardStyle.jsx";
-import { createNoSubstitutionTemplateLiteral } from "typescript";
+// import { createNoSubstitutionTemplateLiteral } from "typescript";
 
 
 class Dashboard extends React.Component {

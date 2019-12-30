@@ -33,9 +33,13 @@ class Threshold extends React.Component {
     
     handleFormSubmit(e) {
         e.preventDefault()
-        this.props.callbackFromParent(this.state);
+        console.log(this.state)
+        this.props.callbackFromParent(this.state)
         this.setState({
-            open: false
+            open: false,
+            cpu: null,
+            memory: null,
+            disk: null
         })
     }
 
@@ -56,7 +60,10 @@ class Threshold extends React.Component {
     
     handleClose() {
         this.setState({
-            open: false
+            open: false,
+            cpu: null,
+            memory: null,
+            disk: null
         })
     }
     

@@ -1,12 +1,14 @@
 from flask import Flask, request, make_response
 from flask_cors import CORS
+from tensorflow.python.keras.backend import set_session
+import tensorflow as tf
 import json
+import os
+import datetime
 import src.api as oa
 import src.model as om
 import src.heat as oh
-import tensorflow as tf
-import datetime
-from tensorflow.python.keras.backend import set_session
+
 
 app = Flask(__name__)
 cors = CORS(
@@ -16,7 +18,7 @@ cors = CORS(
                 r"/stackUpdate/*": {"origin": "*"},
                 r"/login/*": {"origin": "*"},
                 r"/instanceInfo/*": {"origin": "*"},
-                # r"/setAlarm/*": {"origin": "*"}
+                r"/setAlarm/*": {"origin": "*"}
             }
         )
 
@@ -83,6 +85,11 @@ def project():
         'token' : token,
         'loginresult': True
     }
+    
+    with open('token.json',"w") as json_file:
+        entry = {'time': str(datetime.datetime.now()), 'token':token}
+        json.dump(entry, json_file)
+
     resJson = json.dumps(jsonResult)
     print("/login/project  -> ")
     print(resJson)
@@ -134,13 +141,24 @@ def stackUpdate():
     with graph.as_default():
         set_session(sess)
         body = request.get_json()
-        print(body)
+
         token = body['token']
         server_name = body['server_name']
         rating = int(body['rating'])
-        print(rating)
         project_id = body['project_id']
         server_id = oa.get_server_id(token, server_name)
+        filePath = os.getcwd()+'/rating_log/'+str(server_id)+'.json'
+        feeds= []
+        if(os.path.isfile(filePath)):
+            with open(filePath, "r") as feedsjson:
+                feeds = json.load(feedsjson)
+
+        with open(filePath,"w") as json_file:
+            entry = {'time': str(datetime.datetime.now()), 'rating': rating, 'token': token, 'project_id':project_id, 'server_name':server_name}
+            feeds.append(entry)
+            print(feeds)
+            json.dump(feeds, json_file)
+        print(feeds[-1])
         try:
             res = oa.get_resource_list(token, server_id)
             temp = list(oa.get_mesuare_list(token, res))
@@ -156,46 +174,47 @@ def stackUpdate():
                 try:
                     pred_cpu, pred_memory, pred_storage = [ round(x,1) for x in om.predict( cpu, memory, storage, rating, model)]
                     print(pred_cpu, pred_memory, pred_storage)
-                    if( pred_cpu != 1 or pred_memory != 1  or pred_storage != 1 ):
-                        print("Need to Change")
-                        cpu, memory, storage = oa.get_resource_size(token,server_id)
-                        cpu *= pred_cpu.round()
-                        memory *= pred_memory.round(1)
-                        storage *= pred_storage
-                        memory = memory.round(1)*1024
-                        storage = storage.round(1)
-                        flavor_prevID = oa.get_flavor_id(token,server_id)
-                        flavor_name = server_name + str(datetime.datetime.now())
-                        try:
-                            oa.create_flavor(token, flavor_name, int(cpu), int(memory), int(storage))
-                            try:
-                                print( oh.resizeTemplate(project_id, server_name, server_id, flavor_name, token) )
-                            except Exception as e:
-                                print(e)
-                                pass       
-                            # flavor remove
-                            # oa.remove_flavor(token, flavor_prevID)
-                        except Exception as e:
-                            print(e)
-                            pass
-                        # resize here
-                    else:
-                        if(rating <= 20):
-                            print("Need to copy and move")
-                            oh.copyTemplate(project_id, server_name, server_id, token)
-                            res={'result': 'alternative'}
-                            return res
-                        else: 
-                            print("Don't need change")
-                    jsonResult = {
-                        'pred_cpu': pred_cpu,
-                        'pred_memory': pred_memory,
-                        'pred_disk': pred_storage
-                    }
-                    resJson = json.dumps(str(jsonResult))
-                    print("/stackUpdate  -> ")
-                    print(resJson)
-                    res = {'result': True}
+                    res = oa.stackUpdate(token, project_id, server_id, server_name, pred_cpu, pred_memory, pred_storage, rating)
+                    # if( pred_cpu != 1 or pred_memory != 1  or pred_storage != 1 ):
+                    #     print("Need to Change")
+                    #     cpu, memory, storage = oa.get_resource_size(token,server_id)
+                    #     cpu *= pred_cpu.round()
+                    #     memory *= pred_memory.round(1)
+                    #     storage *= pred_storage
+                    #     memory = memory.round(1)*1024
+                    #     storage = storage.round(1)
+                    #     flavor_prevID = oa.get_flavor_id(token,server_id)
+                    #     flavor_name = server_name + str(datetime.datetime.now())
+                    #     try:
+                    #         oa.create_flavor(token, flavor_name, int(cpu), int(memory), int(storage))
+                    #         try:
+                    #             print( oh.resizeTemplate(project_id, server_name, server_id, flavor_name, token) )
+                    #         except Exception as e:
+                    #             print(e)
+                    #             pass       
+                    #         # flavor remove
+                    #         # oa.remove_flavor(token, flavor_prevID)
+                    #     except Exception as e:
+                    #         print(e)
+                    #         pass
+                    #     # resize here
+                    # else:
+                    #     if(rating <= 20):
+                    #         print("Need to copy and move")
+                    #         oh.copyTemplate(project_id, server_name, server_id, token)
+                    #         res={'result': 'alternative'}
+                    #         return res
+                    #     else: 
+                    #         print("Don't need change")
+                    # jsonResult = {
+                    #     'pred_cpu': pred_cpu,
+                    #     'pred_memory': pred_memory,
+                    #     'pred_disk': pred_storage
+                    # }
+                    # resJson = json.dumps(str(jsonResult))
+                    # print("/stackUpdate  -> ")
+                    # print(resJson)
+                    # res = {'result': True}
                     return res
                 except Exception as e:
                     print(e)
@@ -204,20 +223,18 @@ def stackUpdate():
             print(e)
             return {'reslut': False}
 
-
+@app.route("/setAlarm", methods=['POST'])
 def setAlarm():
     """Instance Inforamtion"""
     print("/setAlarm  <- ")
     body = request.get_json()
-    print(body)
     token = body['token']
     alarmCPU = body['cpu']
     alarmMemory = body['memory']
     alarmDisk = body['disk']
     server_name = body['server_name']
     server_id = oa.get_server_id(token, server_name)
-    print(alarmCPU, alarmMemory, alarmDisk)
-    resource_cpu , resource_memory, resource_disk = get_resource_size(token, server_uuid)
+    resource_cpu , resource_memory, resource_disk = oa.get_resource_size(token, server_id)
     # null로 보냈으면 cpu, 0으로 보냈으면 != 0
     if(alarmCPU):
         oa.cpuAlarm(token,server_id,alarmCPU)
@@ -289,6 +306,60 @@ def uploadImage():
     print("/uploadImage  -> ")
     return res
 
+@app.route("/alarmAlter", methods=['POST'])
+def alarmAlter():
+    print("/alarmAlter  <- ")
+    print(request.get_json())
+    data = request.get_json()
+    alarm_id = data['alarm_id']
+
+    if(os.path.isfile('token.json')):
+        with open('token.json') as feedsjson:
+            feeds = json.load(feedsjson)
+            token = feeds['token']
+    else:
+        res = {'result': 'False'}
+        return res
+
+    server_id = oa.get_server_id_by_alarm(alarm_id, token)
+    
+    filePath = os.getcwd()+'/rating_log/'+str(server_id)+'.json'
+    
+    if(os.path.isfile(filePath)):
+        with open(filePath,"r") as feedsjson :
+            feeds = json.load(feedsjson)
+    else:
+        res = {'result': 'False'}
+        return res
+    
+    instance_info = feeds[-1]
+    print(instance_info)
+    print(type(instance_info))
+    project_id = instance_info['project_id']
+    rating = instance_info['rating']
+    server_name = instance_info['server_name']
+    with graph.as_default():
+        set_session(sess)
+        try:
+            res = oa.get_resource_list(token, server_id)
+            temp = list(oa.get_mesuare_list(token, res))
+            cpu = round(temp[0],0)
+            memory  = round(temp[1]*100,0)
+            storage = round(temp[2]*100, 0)
+            print(cpu,memory, storage)
+            with graph.as_default():
+                try:
+                    pred_cpu, pred_memory, pred_storage = [ round(x,1) for x in om.predict( cpu, memory, storage, rating, model)]
+                    print(pred_cpu, pred_memory, pred_storage)
+                    res = oa.stackUpdate(token, project_id, server_id, server_name, pred_cpu, pred_memory, pred_storage, rating)
+                    res = json.dumps(res)
+                    return res
+                except Exception as e:
+                    print(e)
+                    return {'reslut': False}
+        except Exception as e:
+            print(e)
+            return {'reslut': False}
 
 
 if __name__ == '__main__':
