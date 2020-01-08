@@ -17,16 +17,10 @@ npm i
 npm start
 ```
 
-### Files Storage
-- Files are stored in `api/public/files`
-- whenever a file is edited, the changes are persisted in the server
-- Synchronised among connected clients (browsers)
-
 ### Flask Server
-'''sh
+```sh
 cd api
 python3 server.py
-'''
-
+```
 
 
